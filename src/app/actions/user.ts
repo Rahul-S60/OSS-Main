@@ -117,3 +117,4 @@ export async function updateUserProfileDetails(
 
   return { success: true };
 }
+

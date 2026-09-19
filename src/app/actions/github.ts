@@ -4,9 +4,9 @@ import { Issue, IssueDifficulty } from "@/data/issues";
 
 export async function fetchRecommendedIssues(): Promise<Issue[]> {
   try {
-    // Fetch real open issues labeled "good first issue"
+    // Fetch real open issues labeled "help wanted" to get a broad mix
     const response = await fetch(
-      'https://api.github.com/search/issues?q=is:issue+is:open+label:"good first issue"&sort=created&order=desc&per_page=12',
+      'https://api.github.com/search/issues?q=is:issue+is:open+label:"help wanted"&sort=updated&order=desc&per_page=30',
       { next: { revalidate: 3600 } } // Cache for 1 hour to avoid rate limits
     );
 
@@ -18,23 +18,38 @@ export async function fetchRecommendedIssues(): Promise<Issue[]> {
     const data = await response.json();
 
     // Map GitHub API response to our UI Issue model
-    return data.items.map((item: any): Issue => {
-      // Extract repo name from repository_url (e.g. https://api.github.com/repos/facebook/react -> facebook/react)
+    return data.items.map((item: any, index: number): Issue => {
+      // Extract repo name from repository_url
       const repoUrlParts = item.repository_url.split('/');
       const repository = `${repoUrlParts[repoUrlParts.length - 2]}/${repoUrlParts[repoUrlParts.length - 1]}`;
+
+      // Determine difficulty based on labels or distribute evenly
+      const labelNames = item.labels.map((l: any) => l.name.toLowerCase());
+      let difficulty: IssueDifficulty = "Intermediate";
+      
+      if (labelNames.includes("good first issue") || labelNames.includes("first-timers-only")) {
+        difficulty = "Beginner";
+      } else if (labelNames.includes("enhancement") || labelNames.includes("feature")) {
+        difficulty = "Advanced";
+      } else {
+        // Fallback to distribute if there are too many intermediates
+        if (index % 3 === 0) difficulty = "Beginner";
+        else if (index % 3 === 1) difficulty = "Intermediate";
+        else difficulty = "Advanced";
+      }
 
       return {
         id: item.id.toString(),
         repository: repository,
         title: item.title,
         description: item.body ? item.body.substring(0, 200) + '...' : 'No description provided.',
-        difficulty: "Beginner" as IssueDifficulty,
-        matchScore: Math.floor(Math.random() * (95 - 75 + 1)) + 75, // Simulated match score
+        difficulty: difficulty,
+        matchScore: Math.floor(Math.random() * (95 - 75 + 1)) + 75,
         languages: item.labels.map((l: any) => l.name).filter((l: string) => !l.includes(":")).slice(0, 2) || ["JavaScript"],
         technologies: [],
         labels: item.labels.map((l: any) => l.name).slice(0, 3),
-        estimatedEffort: "2-4 hours", // Simulated
-        activity: "Active repository", // Simulated
+        estimatedEffort: difficulty === "Beginner" ? "1-3 hours" : difficulty === "Intermediate" ? "3-8 hours" : "1-3 days",
+        activity: "Active repository",
         enrolled: false,
         reason: "This issue has the 'good first issue' label, making it perfect for your current skill level.",
         comments: item.comments || 0,

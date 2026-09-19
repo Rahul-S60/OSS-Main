@@ -44,9 +44,17 @@ export default function Dashboard() {
           getUserProfile()
         ]);
         
-        setIssuesList(issuesData);
-        
         if (profileData) {
+          // Calculate user's difficulty level based on merged PRs
+          const mergedCount = profileData.contributions?.filter((c: any) => c.status === "merged").length || 0;
+          let userDifficulty = "Beginner";
+          if (mergedCount >= 1 && mergedCount < 3) userDifficulty = "Intermediate";
+          else if (mergedCount >= 3) userDifficulty = "Advanced";
+          
+          // Filter issues to match user difficulty
+          const relevantIssues = issuesData.filter(i => i.difficulty === userDifficulty);
+          setIssuesList(relevantIssues);
+          
           // Process contributions to find active issue
           const activeContribution = profileData.contributions?.find((c: any) => c.status !== "merged");
           const hasMerged = profileData.contributions?.some((c: any) => c.status === "merged");

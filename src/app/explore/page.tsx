@@ -13,6 +13,11 @@ export default function ExploreIssues() {
   const [selectedIssue, setSelectedIssue] = useState<Issue | null>(null);
   const [issuesList, setIssuesList] = useState<Issue[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  // Filter states
+  const [searchQuery, setSearchQuery] = useState("");
+  const [labelFilter, setLabelFilter] = useState("All Labels");
+  const [difficultyFilter, setDifficultyFilter] = useState("All Difficulties");
 
   useEffect(() => {
     async function loadIssues() {
@@ -36,6 +41,21 @@ export default function ExploreIssues() {
     }
   };
 
+  const filteredIssues = issuesList.filter(issue => {
+    const matchesSearch = 
+      issue.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      issue.repository.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      issue.technologies.some(t => t.toLowerCase().includes(searchQuery.toLowerCase()));
+      
+    const matchesLabel = labelFilter === "All Labels" || issue.languages.includes(labelFilter);
+    const matchesDifficulty = difficultyFilter === "All Difficulties" || issue.difficulty === difficultyFilter;
+    
+    return matchesSearch && matchesLabel && matchesDifficulty;
+  });
+
+  const allLabels = ["All Labels", ...Array.from(new Set(issuesList.flatMap(i => i.languages)))];
+  const allDifficulties = ["All Difficulties", "Beginner", "Intermediate", "Advanced"];
+
   return (
     <div className="max-w-6xl mx-auto space-y-8 pb-12">
       <div>
@@ -50,17 +70,37 @@ export default function ExploreIssues() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-muted-text)]" />
           <input 
             type="text" 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search issues, repositories or technologies..." 
             className="w-full h-11 bg-[var(--color-card-bg)] border border-[var(--color-border)] rounded-lg pl-10 pr-4 focus:outline-none focus:border-[var(--color-primary-accent)] focus:ring-1 focus:ring-[var(--color-primary-accent)] transition-all"
           />
         </div>
         <div className="flex items-center gap-2 w-full md:w-auto">
-          <button className="flex-1 md:flex-none h-11 px-4 flex items-center justify-center gap-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-card-bg)] text-sm font-medium hover:bg-[var(--color-elevated-surface)] transition-colors">
-            <Filter className="w-4 h-4" /> Filters
-          </button>
-          <button className="flex-1 md:flex-none h-11 px-4 flex items-center justify-center gap-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-card-bg)] text-sm font-medium hover:bg-[var(--color-elevated-surface)] transition-colors">
-            <SortDesc className="w-4 h-4" /> Best match
-          </button>
+          <div className="relative flex-1 md:flex-none h-11 border border-[var(--color-border)] bg-[var(--color-card-bg)] rounded-lg hover:bg-[var(--color-elevated-surface)] transition-colors flex items-center px-2">
+            <Filter className="w-4 h-4 ml-2 text-[var(--color-muted-text)]" />
+            <select 
+              value={labelFilter}
+              onChange={(e) => setLabelFilter(e.target.value)}
+              className="w-full h-full bg-transparent border-none focus:outline-none text-sm font-medium pl-2 pr-4 appearance-none cursor-pointer"
+            >
+              {allLabels.map(label => (
+                <option key={label} value={label} className="bg-[var(--color-card-bg)] text-[var(--color-primary-text)]">{label}</option>
+              ))}
+            </select>
+          </div>
+          
+          <div className="relative flex-1 md:flex-none h-11 border border-[var(--color-border)] bg-[var(--color-card-bg)] rounded-lg hover:bg-[var(--color-elevated-surface)] transition-colors flex items-center px-2">
+            <select 
+              value={difficultyFilter}
+              onChange={(e) => setDifficultyFilter(e.target.value)}
+              className="w-full h-full bg-transparent border-none focus:outline-none text-sm font-medium px-3 appearance-none cursor-pointer"
+            >
+              {allDifficulties.map(diff => (
+                <option key={diff} value={diff} className="bg-[var(--color-card-bg)] text-[var(--color-primary-text)]">{diff}</option>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
 
@@ -71,16 +111,22 @@ export default function ExploreIssues() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-          {issuesList.map((issue, idx) => (
-            <motion.div
-              key={issue.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: idx * 0.05 }}
-            >
-              <IssueCard issue={issue} onWhyClick={handleWhyClick} />
-            </motion.div>
-          ))}
+          {filteredIssues.length > 0 ? (
+            filteredIssues.map((issue, idx) => (
+              <motion.div
+                key={issue.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: idx * 0.05 }}
+              >
+                <IssueCard issue={issue} onWhyClick={handleWhyClick} />
+              </motion.div>
+            ))
+          ) : (
+            <div className="col-span-full py-12 text-center text-[var(--color-secondary-text)]">
+              No issues match your current filters. Try adjusting them!
+            </div>
+          )}
         </div>
       )}
 

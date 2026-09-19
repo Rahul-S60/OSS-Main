@@ -5,10 +5,11 @@ import { motion } from "framer-motion";
 import { MapPin, Link as LinkIcon, GitPullRequest as Github, Share2, Copy, Trophy, GitMerge, Flame } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { achievements } from "@/data/achievements";
-import { getUserProfile } from "@/app/actions/user";
+import { getUserProfile, updateUserProfileDetails } from "@/app/actions/user";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
+import { X, Save } from "lucide-react";
 import { useToast } from "@/components/ui/Toast";
 import * as Icons from "lucide-react";
 
@@ -19,9 +20,29 @@ export default function ProfilePage() {
   const [isSharing, setIsSharing] = useState(false);
   const [heatmap, setHeatmap] = useState<number[][]>([]);
   
+  // Edit Profile State
+  const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [editForm, setEditForm] = useState({
+    name: "",
+    bio: "",
+    experienceLevel: "Beginner",
+    languages: "",
+  });
+
   useEffect(() => {
-    getUserProfile().then(data => setProfile(data));
-  }, []);
+    getUserProfile().then(data => {
+      setProfile(data);
+      if (data) {
+        setEditForm({
+          name: session?.user?.name || "",
+          bio: data.bio || "",
+          experienceLevel: data.experienceLevel || "Beginner",
+          languages: data.languages?.join(", ") || "",
+        });
+      }
+    });
+  }, [session]);
 
   const unlockedBadgesList = profile?.unlockedBadges || [];
   const unlockedBadges = achievements.filter(b => unlockedBadgesList.includes(b.id));
@@ -32,6 +53,32 @@ export default function ProfilePage() {
       setIsSharing(false);
       addToast({ title: "Profile link copied to clipboard", type: "success" });
     }, 500);
+  };
+
+  const handleSaveProfile = async () => {
+    setIsSaving(true);
+    try {
+      const languagesArray = editForm.languages.split(",").map(s => s.trim()).filter(s => s.length > 0);
+      await updateUserProfileDetails(editForm.name, editForm.bio, editForm.experienceLevel, languagesArray);
+      
+      // Update local state instantly
+      setProfile((prev: any) => ({
+        ...prev,
+        bio: editForm.bio,
+        experienceLevel: editForm.experienceLevel,
+        languages: languagesArray,
+      }));
+      // Note: session.user.name won't update instantly without NextAuth session refresh, 
+      // but it will apply on next full page reload.
+      
+      setIsEditing(false);
+      addToast({ title: "Profile updated successfully", type: "success" });
+    } catch (e) {
+      console.error(e);
+      addToast({ title: "Failed to update profile", type: "error" });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   useEffect(() => {
@@ -103,13 +150,21 @@ export default function ProfilePage() {
               <img src={session?.user?.image || "https://github.com/ghost.png"} alt={session?.user?.name || "User"} className="w-full h-full object-cover" />
             </div>
             <div className="flex-1">
-              <h1 className="text-2xl font-bold text-[var(--color-primary-text)]">{session?.user?.name || 'Contributor'}</h1>
+              <div className="flex items-center gap-3">
+                <h1 className="text-2xl font-bold text-[var(--color-primary-text)]">{session?.user?.name || 'Contributor'}</h1>
+                {profile?.experienceLevel && (
+                  <Badge variant="secondary" className="uppercase text-[10px] tracking-wider">{profile.experienceLevel}</Badge>
+                )}
+              </div>
               <p className="text-[var(--color-secondary-text)]">@{(session?.user as any)?.username || 'user'}</p>
             </div>
             <div className="w-full md:w-auto flex gap-3 mt-4 md:mt-0">
+              <Button onClick={() => setIsEditing(true)} variant="secondary" className="w-full md:w-auto">
+                Edit Profile
+              </Button>
               <Button onClick={handleShare} className="w-full md:w-auto gap-2">
                 {isSharing ? <Copy className="w-4 h-4" /> : <Share2 className="w-4 h-4" />}
-                Share Profile
+                Share
               </Button>
             </div>
           </div>
@@ -117,7 +172,10 @@ export default function ProfilePage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="space-y-4">
               <p className="text-[var(--color-primary-text)] font-medium">Open Source Contributor</p>
-              <div className="space-y-2 text-sm text-[var(--color-secondary-text)]">
+              {profile?.bio && (
+                <p className="text-sm text-[var(--color-secondary-text)]">{profile.bio}</p>
+              )}
+              <div className="space-y-2 text-sm text-[var(--color-secondary-text)] pt-2 border-t border-[var(--color-border)]/50">
                 <div className="flex items-center gap-2">
                   <MapPin className="w-4 h-4" /> {(session?.user as any)?.location || 'Global'}
                 </div>
@@ -213,11 +271,10 @@ export default function ProfilePage() {
         </div>
 
         <div className="space-y-8">
-          {/* Skills */}
           <section className="bg-[var(--color-card-bg)] border border-[var(--color-border)] rounded-2xl p-6">
             <h2 className="text-lg font-semibold mb-4">Skills</h2>
             <div className="flex flex-wrap gap-2">
-              {((session?.user as any)?.languages || ["React", "FastAPI", "Git"]).map((skill: string) => (
+              {(profile?.languages?.length > 0 ? profile.languages : ["React", "FastAPI", "Git"]).map((skill: string) => (
                 <Badge key={skill} variant="secondary">{skill}</Badge>
               ))}
             </div>
@@ -249,6 +306,81 @@ export default function ProfilePage() {
           </section>
         </div>
       </div>
+
+      {/* Edit Profile Modal */}
+      {isEditing && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsEditing(false)} />
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="relative bg-[var(--color-card-bg)] border border-[var(--color-border)] shadow-2xl rounded-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]"
+          >
+            <div className="flex items-center justify-between p-5 border-b border-[var(--color-border)]">
+              <h2 className="text-lg font-bold">Edit Profile</h2>
+              <button onClick={() => setIsEditing(false)} className="text-[var(--color-secondary-text)] hover:text-[var(--color-primary-text)]">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="p-6 overflow-y-auto space-y-5">
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-[var(--color-primary-text)]">Display Name</label>
+                <input 
+                  type="text" 
+                  value={editForm.name}
+                  onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                  className="w-full h-11 bg-[var(--color-background)] border border-[var(--color-border)] rounded-lg px-3 focus:outline-none focus:border-[var(--color-primary-accent)] focus:ring-1 focus:ring-[var(--color-primary-accent)]"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-[var(--color-primary-text)]">Bio</label>
+                <textarea 
+                  value={editForm.bio}
+                  onChange={(e) => setEditForm({ ...editForm, bio: e.target.value })}
+                  className="w-full h-24 bg-[var(--color-background)] border border-[var(--color-border)] rounded-lg p-3 focus:outline-none focus:border-[var(--color-primary-accent)] focus:ring-1 focus:ring-[var(--color-primary-accent)] resize-none"
+                  placeholder="Tell us about yourself..."
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-[var(--color-primary-text)]">Experience Level</label>
+                <select 
+                  value={editForm.experienceLevel}
+                  onChange={(e) => setEditForm({ ...editForm, experienceLevel: e.target.value })}
+                  className="w-full h-11 bg-[var(--color-background)] border border-[var(--color-border)] rounded-lg px-3 focus:outline-none focus:border-[var(--color-primary-accent)] focus:ring-1 focus:ring-[var(--color-primary-accent)]"
+                >
+                  <option value="Beginner">Beginner</option>
+                  <option value="Intermediate">Intermediate</option>
+                  <option value="Advanced">Advanced</option>
+                </select>
+                <p className="text-xs text-[var(--color-secondary-text)] mt-1">This badge will be displayed next to your name on your profile.</p>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-[var(--color-primary-text)]">Skills (Languages & Tools)</label>
+                <input 
+                  type="text" 
+                  value={editForm.languages}
+                  onChange={(e) => setEditForm({ ...editForm, languages: e.target.value })}
+                  placeholder="e.g. React, Python, Docker"
+                  className="w-full h-11 bg-[var(--color-background)] border border-[var(--color-border)] rounded-lg px-3 focus:outline-none focus:border-[var(--color-primary-accent)] focus:ring-1 focus:ring-[var(--color-primary-accent)]"
+                />
+                <p className="text-xs text-[var(--color-secondary-text)] mt-1">Separate skills with commas.</p>
+              </div>
+            </div>
+
+            <div className="p-5 border-t border-[var(--color-border)] flex justify-end gap-3 bg-[var(--color-elevated-surface)]/30">
+              <Button variant="ghost" onClick={() => setIsEditing(false)}>Cancel</Button>
+              <Button onClick={handleSaveProfile} disabled={isSaving} className="gap-2">
+                {isSaving ? "Saving..." : <><Save className="w-4 h-4" /> Save Profile</>}
+              </Button>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 }

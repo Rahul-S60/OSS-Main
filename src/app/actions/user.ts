@@ -88,7 +88,12 @@ export async function getUserProfile() {
   return JSON.parse(JSON.stringify(result));
 }
 
-export async function updateUserProfileDetails(name: string, bio: string) {
+export async function updateUserProfileDetails(
+  name: string, 
+  bio: string,
+  experienceLevel: string = "Beginner",
+  languages: string[] = []
+) {
   const session = await auth();
   if (!session?.user?.id) throw new Error("Unauthorized");
   
@@ -100,10 +105,14 @@ export async function updateUserProfileDetails(name: string, bio: string) {
     data: { name },
   });
 
-  // Update bio in UserProfile table
+  // Update bio, experience, and skills in UserProfile table
   await prisma.userProfile.update({
     where: { userId },
-    data: { bio },
+    data: { 
+      bio,
+      experienceLevel,
+      languages
+    },
   });
 
   return { success: true };

@@ -67,6 +67,7 @@ model UserProfile {
   github_username String?
   location        String?
   bio             String?
+  experienceLevel String   @default("Beginner")
   languages       String[]
   
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)

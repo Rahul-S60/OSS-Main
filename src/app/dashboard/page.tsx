@@ -45,11 +45,8 @@ export default function Dashboard() {
         ]);
         
         if (profileData) {
-          // Calculate user's difficulty level based on merged PRs
-          const mergedCount = profileData.contributions?.filter((c: any) => c.status === "merged").length || 0;
-          let userDifficulty = "Beginner";
-          if (mergedCount >= 1 && mergedCount < 3) userDifficulty = "Intermediate";
-          else if (mergedCount >= 3) userDifficulty = "Advanced";
+          // Use the manually set experience level from the user's profile
+          const userDifficulty = profileData.experienceLevel || "Beginner";
           
           // Filter issues to match user difficulty
           const relevantIssues = issuesData.filter(i => i.difficulty === userDifficulty);

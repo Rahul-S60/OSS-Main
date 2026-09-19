@@ -7,26 +7,22 @@ import { useSession } from "next-auth/react";
 import { getUserProfile } from "@/app/actions/user";
 import { useEffect } from "react";
 
+import { getTopUsers } from "@/app/actions/leaderboard";
+
 export default function LeaderboardPage() {
   const { data: session } = useSession();
-  const [activeTab, setActiveTab] = useState("This week");
+  const [activeTab, setActiveTab] = useState("All time");
   const [profile, setProfile] = useState<any>(null);
+  const [users, setUsers] = useState<any[]>([]);
 
   useEffect(() => {
     getUserProfile().then(data => setProfile(data));
+    getTopUsers().then(data => setUsers(data));
   }, []);
 
-  const mockUsers = [
-    { rank: 1, name: "Sarah Chen", handle: "@sarahc", avatar: "https://i.pravatar.cc/150?u=sarah", merged: 42, points: 4200, streak: 14 },
-    { rank: 2, name: "David Kim", handle: "@dkim", avatar: "https://i.pravatar.cc/150?u=david", merged: 38, points: 3850, streak: 21 },
-    { rank: 3, name: "Elena Rodriguez", handle: "@erod", avatar: "https://i.pravatar.cc/150?u=elena", merged: 35, points: 3600, streak: 5 },
-    { rank: 4, name: "James Smith", handle: "@jsmith", avatar: "https://i.pravatar.cc/150?u=james", merged: 29, points: 2950, streak: 12 },
-    { rank: 5, name: "Wei Zhang", handle: "@wei", avatar: "https://i.pravatar.cc/150?u=wei", merged: 24, points: 2500, streak: 8 },
-  ];
-
   // Insert current user based on points for demo
-  const prMerged = profile?.contributions?.some((c: any) => c.status === "merged");
-  const userRank = prMerged ? 183 : 247;
+  const prMerged = profile?.prMerged;
+  const userRank = users.find(u => u.id === session?.user?.id)?.rank || "-";
   
   return (
     <div className="max-w-5xl mx-auto pb-12 space-y-8">
@@ -66,12 +62,12 @@ export default function LeaderboardPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--color-border)]">
-              {mockUsers.map((user, idx) => (
+              {users.map((user, idx) => (
                 <motion.tr 
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: idx * 0.1 }}
-                  key={user.handle} 
+                  key={user.id} 
                   className="hover:bg-[var(--color-elevated-surface)]/50 transition-colors"
                 >
                   <td className="px-6 py-4 text-center">
@@ -109,24 +105,24 @@ export default function LeaderboardPage() {
                 </motion.tr>
               ))}
               
-              {/* Separator */}
-              <tr>
-                <td colSpan={5} className="px-6 py-2 text-center text-[var(--color-muted-text)] bg-[var(--color-elevated-surface)]/30">
-                  <span className="flex gap-1 justify-center">
-                    <span className="w-1 h-1 rounded-full bg-[var(--color-muted-text)]" />
-                    <span className="w-1 h-1 rounded-full bg-[var(--color-muted-text)]" />
-                    <span className="w-1 h-1 rounded-full bg-[var(--color-muted-text)]" />
-                  </span>
-                </td>
-              </tr>
-
               {/* Current User */}
-              <motion.tr 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.6 }}
-                className="bg-[var(--color-primary-accent)]/5 hover:bg-[var(--color-primary-accent)]/10 transition-colors border-t border-[var(--color-primary-accent)]/20"
-              >
+              {session?.user && !users.find(u => u.id === session.user?.id) && (
+                <>
+                  <tr>
+                    <td colSpan={5} className="px-6 py-2 text-center text-[var(--color-muted-text)] bg-[var(--color-elevated-surface)]/30">
+                      <span className="flex gap-1 justify-center">
+                        <span className="w-1 h-1 rounded-full bg-[var(--color-muted-text)]" />
+                        <span className="w-1 h-1 rounded-full bg-[var(--color-muted-text)]" />
+                        <span className="w-1 h-1 rounded-full bg-[var(--color-muted-text)]" />
+                      </span>
+                    </td>
+                  </tr>
+                  <motion.tr 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.6 }}
+                    className="bg-[var(--color-primary-accent)]/5 hover:bg-[var(--color-primary-accent)]/10 transition-colors border-t border-[var(--color-primary-accent)]/20"
+                  >
                 <td className="px-6 py-4 text-center">
                   <div className="inline-flex items-center justify-center font-bold text-sm text-[var(--color-primary-accent)]">
                     {userRank}
@@ -149,12 +145,14 @@ export default function LeaderboardPage() {
                 <td className="px-6 py-4 text-right font-bold text-[var(--color-primary-accent)]">
                   {profile?.points || 0}
                 </td>
-                <td className="px-6 py-4 text-right text-sm">
-                  <div className="flex items-center justify-end gap-1.5 font-medium text-[var(--color-primary-text)]">
-                    {profile?.streak || 0} <Flame className="w-4 h-4 text-orange-500" />
-                  </div>
-                </td>
-              </motion.tr>
+                  <td className="px-6 py-4 text-right text-sm">
+                    <div className="flex items-center justify-end gap-1.5 font-medium text-[var(--color-primary-text)]">
+                      {profile?.streak || 0} <Flame className="w-4 h-4 text-orange-500" />
+                    </div>
+                  </td>
+                </motion.tr>
+                </>
+              )}
             </tbody>
           </table>
         </div>

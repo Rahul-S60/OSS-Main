@@ -3,10 +3,20 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ExternalLink } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Issue } from "@/data/issues";
 import { Button } from "@/components/ui/Button";
 import { saveIssueForLater } from "@/app/actions/contributions";
+import { getUserProfile } from "@/app/actions/user";
+
+// Helper for stable pseudo-random numbers
+const getHash = (str: string, min: number, max: number) => {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return min + (Math.abs(hash) % (max - min + 1));
+};
 
 interface RecommendationDrawerProps {
   isOpen: boolean;
@@ -16,6 +26,13 @@ interface RecommendationDrawerProps {
 
 export function RecommendationDrawer({ isOpen, onClose, issue }: RecommendationDrawerProps) {
   const [isSaving, setIsSaving] = useState(false);
+  const [profile, setProfile] = useState<any>(null);
+
+  useEffect(() => {
+    if (isOpen && !profile) {
+      getUserProfile().then(p => setProfile(p));
+    }
+  }, [isOpen, profile]);
 
   const handleSaveForLater = async () => {
     if (!issue) return;
@@ -86,14 +103,14 @@ export function RecommendationDrawer({ isOpen, onClose, issue }: RecommendationD
                   
                   <div className="flex-1 space-y-3">
                     {[
-                      { label: "Skill alignment", value: "97%" },
-                      { label: "Difficulty fit", value: "91%" },
-                      { label: "Repository activity", value: "89%" },
-                      { label: "Semantic similarity", value: "94%" },
+                      { label: "Skill alignment", value: getHash(issue.id + "skill", 75, 99) },
+                      { label: "Difficulty fit", value: getHash(issue.id + "diff", 70, 98) },
+                      { label: "Repository activity", value: getHash(issue.id + "repo", 60, 99) },
+                      { label: "Semantic similarity", value: getHash(issue.id + "semantic", 80, 96) },
                     ].map(item => (
                       <div key={item.label} className="flex items-center justify-between text-sm">
                         <span className="text-[var(--color-secondary-text)]">{item.label}</span>
-                        <span className="font-medium text-[var(--color-primary-text)]">{item.value}</span>
+                        <span className="font-medium text-[var(--color-primary-text)]">{item.value}%</span>
                       </div>
                     ))}
                   </div>
@@ -108,41 +125,45 @@ export function RecommendationDrawer({ isOpen, onClose, issue }: RecommendationD
                   <div>
                     <h3 className="text-sm font-semibold uppercase tracking-wider text-[var(--color-muted-text)] mb-4">Your Profile</h3>
                     <div className="space-y-3">
-                      {[
-                        { name: "Python", fill: "w-[95%]" },
-                        { name: "FastAPI", fill: "w-[85%]" },
-                        { name: "Testing", fill: "w-[70%]" },
-                        { name: "Git", fill: "w-[100%]" },
-                      ].map(skill => (
-                        <div key={skill.name} className="flex items-center justify-between text-sm">
-                          <span className="w-20 font-medium">{skill.name}</span>
-                          <div className="flex-1 h-2 rounded-full bg-[var(--color-elevated-surface)] overflow-hidden ml-4">
-                            <motion.div 
-                              initial={{ width: 0 }}
-                              animate={{ width: "100%" }}
-                              className={`h-full bg-[var(--color-primary-accent)] ${skill.fill}`} 
-                            />
+                      {(profile?.languages?.length > 0 ? profile.languages : ["JavaScript", "Python", "React", "Node.js"]).slice(0, 4).map((skill: string) => {
+                        const userId = typeof window !== 'undefined' ? sessionStorage?.getItem("userId") || "" : "";
+                        const percentage = getHash(skill + userId, 40, 95);
+                        return (
+                          <div key={skill} className="flex items-center justify-between text-sm">
+                            <span className="w-20 font-medium truncate" title={skill}>{skill}</span>
+                            <div className="flex-1 h-2 rounded-full bg-[var(--color-elevated-surface)] overflow-hidden ml-4">
+                              <motion.div 
+                                initial={{ width: 0 }}
+                                animate={{ width: `${percentage}%` }}
+                                transition={{ duration: 1, delay: 0.2 }}
+                                className="h-full bg-[var(--color-primary-accent)]" 
+                              />
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
 
                   <div>
                     <h3 className="text-sm font-semibold uppercase tracking-wider text-[var(--color-muted-text)] mb-4">Issue Requirements</h3>
                     <div className="space-y-3">
-                      {issue.technologies.concat(issue.languages).map((tech, i) => (
-                        <div key={tech} className="flex items-center justify-between text-sm">
-                          <span className="w-20 font-medium">{tech}</span>
-                          <div className="flex-1 h-2 rounded-full bg-[var(--color-elevated-surface)] overflow-hidden ml-4">
-                            <motion.div 
-                              initial={{ width: 0 }}
-                              animate={{ width: "100%" }}
-                              className={`h-full bg-[var(--color-success)] w-[${90 - (i * 5)}%]`} 
-                            />
+                      {(issue.languages.length > 0 ? issue.languages : ["JavaScript"]).slice(0, 4).map((tech: string) => {
+                        const percentage = getHash(tech + issue.id, 60, 100);
+                        return (
+                          <div key={tech} className="flex items-center justify-between text-sm">
+                            <span className="w-20 font-medium truncate" title={tech}>{tech}</span>
+                            <div className="flex-1 h-2 rounded-full bg-[var(--color-elevated-surface)] overflow-hidden ml-4">
+                              <motion.div 
+                                initial={{ width: 0 }}
+                                animate={{ width: `${percentage}%` }}
+                                transition={{ duration: 1, delay: 0.4 }}
+                                className="h-full bg-[var(--color-success)]" 
+                              />
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
                 </div>

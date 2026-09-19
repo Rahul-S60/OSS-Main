@@ -39,20 +39,48 @@ export default function ProfilePage() {
       const weeks = 20;
       const days = 7;
       const grid = [];
+      const countsByDate: Record<string, number> = {};
+      
+      if (profile?.contributions) {
+        profile.contributions.forEach((c: any) => {
+          if (c.createdAt) {
+            const createdDate = new Date(c.createdAt).toISOString().split('T')[0];
+            countsByDate[createdDate] = (countsByDate[createdDate] || 0) + 1;
+          }
+          
+          if (c.status === "merged" && c.updatedAt) {
+            const updatedDate = new Date(c.updatedAt).toISOString().split('T')[0];
+            countsByDate[updatedDate] = (countsByDate[updatedDate] || 0) + 1;
+          }
+        });
+      }
+
+      const today = new Date();
+      const todayDayOfWeek = today.getDay(); // 0 = Sunday, 6 = Saturday
+
       for (let w = 0; w < weeks; w++) {
         const week = [];
         for (let d = 0; d < days; d++) {
-          const isRecent = w > 16;
-          const probability = isRecent ? 0.6 : 0.2;
+          // If we are in the last week, and the day is in the future relative to today
+          if (w === weeks - 1 && d > todayDayOfWeek) {
+            week.push(0);
+            continue;
+          }
+          
+          // Calculate how many days ago this cell represents
+          const daysAgo = (weeks - 1 - w) * 7 + (todayDayOfWeek - d);
+          
+          const date = new Date();
+          date.setDate(today.getDate() - daysAgo);
+          
+          const dateString = date.toISOString().split('T')[0];
+          const count = countsByDate[dateString] || 0;
+          
           let level = 0;
-          
-          if (Math.random() < probability) {
-            level = Math.floor(Math.random() * 3) + 1;
-          }
-          
-          if (profile?.prMerged && w === weeks - 1 && d === days - 2) {
-            level = 4;
-          }
+          if (count === 1) level = 1;
+          else if (count === 2) level = 2;
+          else if (count === 3) level = 3;
+          else if (count >= 4) level = 4;
           
           week.push(level);
         }
@@ -62,7 +90,7 @@ export default function ProfilePage() {
     };
 
     setHeatmap(generateHeatmap());
-  }, [profile?.prMerged]);
+  }, [profile?.contributions]);
 
   return (
     <div className="max-w-5xl mx-auto space-y-8 pb-12">
@@ -123,7 +151,7 @@ export default function ProfilePage() {
           <section className="bg-[var(--color-card-bg)] border border-[var(--color-border)] rounded-2xl p-6">
             <h2 className="text-lg font-semibold mb-6 flex items-center justify-between">
               Contribution Activity
-              <span className="text-sm font-normal text-[var(--color-secondary-text)]">{profile?.issueEnrolled ? "2 contributions in the last year" : "0 contributions in the last year"}</span>
+              <span className="text-sm font-normal text-[var(--color-secondary-text)]">{profile?.contributions?.length || 0} contributions in the last year</span>
             </h2>
             <div className="overflow-x-auto pb-4">
               <div className="flex gap-1 min-w-max">
@@ -151,29 +179,30 @@ export default function ProfilePage() {
           <section className="space-y-4">
             <h2 className="text-lg font-semibold">Recent History</h2>
             <div className="bg-[var(--color-card-bg)] border border-[var(--color-border)] rounded-2xl overflow-hidden">
-              {profile?.prMerged ? (
-                <div className="p-4 border-b border-[var(--color-border)] flex items-start gap-4">
-                  <div className="mt-1 w-8 h-8 rounded-full bg-[var(--color-success)]/10 flex items-center justify-center shrink-0">
-                    <GitMerge className="w-4 h-4 text-[var(--color-success)]" />
+              {profile?.contributions && profile.contributions.length > 0 ? (
+                profile.contributions.map((c: any) => (
+                  <div key={c.id} className="p-4 border-b border-[var(--color-border)] last:border-0 flex items-start gap-4">
+                    {c.status === "merged" ? (
+                      <div className="mt-1 w-8 h-8 rounded-full bg-[var(--color-success)]/10 flex items-center justify-center shrink-0">
+                        <GitMerge className="w-4 h-4 text-[var(--color-success)]" />
+                      </div>
+                    ) : (
+                      <div className="mt-1 w-8 h-8 rounded-full bg-[var(--color-primary-accent)]/10 flex items-center justify-center shrink-0">
+                        <Github className="w-4 h-4 text-[var(--color-primary-accent)]" />
+                      </div>
+                    )}
+                    <div>
+                      <p className="font-medium">
+                        {c.status === "merged" ? "Merged PR in " : "Working on "} 
+                        <span className="text-[var(--color-primary-accent)]">{c.issue.repository}</span>
+                      </p>
+                      <p className="text-sm text-[var(--color-secondary-text)]">{c.issue.title}</p>
+                      <p className="text-xs text-[var(--color-muted-text)] mt-1">
+                        {c.status === "merged" ? "Completed" : "In progress"}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-medium">Merged PR in <span className="text-[var(--color-primary-accent)]">fastapi/fastapi</span></p>
-                    <p className="text-sm text-[var(--color-secondary-text)]">Improve validation error messages (#421)</p>
-                    <p className="text-xs text-[var(--color-muted-text)] mt-1">Today</p>
-                  </div>
-                </div>
-              ) : null}
-              {profile?.onboardingCompleted ? (
-                <div className="p-4 flex items-start gap-4">
-                  <div className="mt-1 w-8 h-8 rounded-full bg-[var(--color-elevated-surface)] flex items-center justify-center shrink-0">
-                    <Github className="w-4 h-4 text-[var(--color-muted-text)]" />
-                  </div>
-                  <div>
-                    <p className="font-medium">Joined OpenSource Companion</p>
-                    <p className="text-sm text-[var(--color-secondary-text)]">Connected GitHub profile and set up skills.</p>
-                    <p className="text-xs text-[var(--color-muted-text)] mt-1">2 days ago</p>
-                  </div>
-                </div>
+                ))
               ) : (
                 <div className="p-8 text-center text-[var(--color-secondary-text)]">
                   No history available yet.

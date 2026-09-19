@@ -33,6 +33,12 @@ export default function OnboardingFlow() {
     }
   };
 
+  const prevStep = () => {
+    if (currentStep > 0) {
+      setCurrentStep(prev => prev - 1);
+    }
+  };
+
   const toggleSkill = (skill: string) => {
     setSelectedSkills(prev => 
       prev.includes(skill) ? prev.filter(s => s !== skill) : [...prev, skill]
@@ -165,9 +171,14 @@ export default function OnboardingFlow() {
                 </p>
               </div>
 
-              <Button size="lg" className="w-full group" onClick={nextStep} disabled={selectedSkills.length === 0}>
-                Continue <ChevronRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
-              </Button>
+              <div className="flex gap-4 w-full">
+                <Button variant="outline" size="lg" className="w-full flex-1" onClick={prevStep}>
+                  Back
+                </Button>
+                <Button size="lg" className="w-full flex-[2] group" onClick={nextStep} disabled={selectedSkills.length === 0}>
+                  Continue <ChevronRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                </Button>
+              </div>
             </motion.div>
           )}
 
@@ -218,9 +229,14 @@ export default function OnboardingFlow() {
                 ))}
               </div>
 
-              <Button size="lg" className="w-full group" onClick={nextStep} disabled={!experience}>
-                Continue <ChevronRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
-              </Button>
+              <div className="flex gap-4 w-full">
+                <Button variant="outline" size="lg" className="w-full flex-1" onClick={prevStep}>
+                  Back
+                </Button>
+                <Button size="lg" className="w-full flex-[2] group" onClick={nextStep} disabled={!experience}>
+                  Continue <ChevronRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                </Button>
+              </div>
             </motion.div>
           )}
 

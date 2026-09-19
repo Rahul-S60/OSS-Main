@@ -71,6 +71,19 @@ export default function ContributionWorkspace() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [isSimulatingMerge, setIsSimulatingMerge] = useState(false);
 
+  // Checklist states
+  const [step1Checks, setStep1Checks] = useState<boolean[]>([false, false, false, false]);
+  const [step3Checks, setStep3Checks] = useState<boolean[]>([false, false, false, false, false]);
+  const [step5Checks, setStep5Checks] = useState<boolean[]>([true, true, true, true]);
+
+  const toggleCheck = (setter: React.Dispatch<React.SetStateAction<boolean[]>>, idx: number) => {
+    setter(prev => {
+      const next = [...prev];
+      next[idx] = !next[idx];
+      return next;
+    });
+  };
+
   if (loading) return <div className="p-8 flex justify-center"><div className="w-8 h-8 rounded-full border-2 border-[var(--color-primary-accent)] border-t-transparent animate-spin" /></div>;
   if (!issue) return <div className="p-8">Contribution not found</div>;
 
@@ -106,11 +119,17 @@ export default function ContributionWorkspace() {
   const simulateMerge = async () => {
     setIsSimulatingMerge(true);
     try {
-      await mergePullRequest(issueId);
+      const result = await mergePullRequest(issueId);
+      if (result && result.error) {
+        addToast({ title: "Verification Failed", description: result.error, type: "error" });
+        setIsSimulatingMerge(false);
+        return;
+      }
       setIsSimulatingMerge(false);
       setShowSuccess(true);
     } catch (error) {
       console.error("Failed to merge", error);
+      addToast({ title: "Merge failed", description: "An unexpected error occurred.", type: "error" });
       setIsSimulatingMerge(false);
     }
   };
@@ -186,7 +205,12 @@ export default function ContributionWorkspace() {
                   <div className="space-y-3">
                     {["Read issue description", "Understand expected behavior", "Identify affected files", "Check existing tests"].map((item, i) => (
                       <label key={i} className="flex items-center gap-3 cursor-pointer group">
-                        <input type="checkbox" className="w-5 h-5 rounded border-[var(--color-border)] text-[var(--color-primary-accent)] focus:ring-[var(--color-primary-accent)] bg-transparent" />
+                        <input 
+                          type="checkbox" 
+                          checked={step1Checks[i]}
+                          onChange={() => toggleCheck(setStep1Checks, i)}
+                          className="w-5 h-5 rounded border-[var(--color-border)] text-[var(--color-primary-accent)] focus:ring-[var(--color-primary-accent)] bg-transparent" 
+                        />
                         <span className="text-sm text-[var(--color-primary-text)] group-hover:text-[var(--color-primary-accent)] transition-colors">{item}</span>
                       </label>
                     ))}
@@ -203,7 +227,7 @@ export default function ContributionWorkspace() {
                 </div>
 
                 <div className="pt-4">
-                  <Button size="lg" className="w-full" onClick={nextStep}>
+                  <Button size="lg" className="w-full" onClick={nextStep} disabled={!step1Checks.every(Boolean)}>
                     Mark as understood
                   </Button>
                 </div>
@@ -275,7 +299,12 @@ export default function ContributionWorkspace() {
                   <div className="space-y-3">
                     {["Locate validation handler", "Update error message", "Add test case", "Run test suite", "Review changes"].map((item, i) => (
                       <label key={i} className="flex items-center gap-3 cursor-pointer group">
-                        <input type="checkbox" className="w-5 h-5 rounded border-[var(--color-border)] text-[var(--color-primary-accent)] focus:ring-[var(--color-primary-accent)] bg-transparent" />
+                        <input 
+                          type="checkbox" 
+                          checked={step3Checks[i]}
+                          onChange={() => toggleCheck(setStep3Checks, i)}
+                          className="w-5 h-5 rounded border-[var(--color-border)] text-[var(--color-primary-accent)] focus:ring-[var(--color-primary-accent)] bg-transparent" 
+                        />
                         <span className="text-sm text-[var(--color-primary-text)] group-hover:text-[var(--color-primary-accent)] transition-colors">{item}</span>
                       </label>
                     ))}
@@ -305,7 +334,7 @@ export default function ContributionWorkspace() {
                 </div>
 
                 <div className="pt-4">
-                  <Button size="lg" className="w-full" onClick={nextStep}>
+                  <Button size="lg" className="w-full" onClick={nextStep} disabled={!step3Checks.every(Boolean)}>
                     Implementation complete
                   </Button>
                 </div>
@@ -398,7 +427,12 @@ export default function ContributionWorkspace() {
                         <div className="space-y-3">
                           {["Tests added", "Tests passing", "Documentation checked", "Issue linked"].map((item, i) => (
                             <label key={i} className="flex items-center gap-3 cursor-pointer group">
-                              <input type="checkbox" defaultChecked className="w-5 h-5 rounded border-[var(--color-border)] text-[var(--color-primary-accent)] focus:ring-[var(--color-primary-accent)] bg-transparent" />
+                              <input 
+                                type="checkbox" 
+                                checked={step5Checks[i]}
+                                onChange={() => toggleCheck(setStep5Checks, i)}
+                                className="w-5 h-5 rounded border-[var(--color-border)] text-[var(--color-primary-accent)] focus:ring-[var(--color-primary-accent)] bg-transparent" 
+                              />
                               <span className="text-sm text-[var(--color-primary-text)]">{item}</span>
                             </label>
                           ))}
@@ -407,7 +441,7 @@ export default function ContributionWorkspace() {
                     </div>
 
                     <div className="pt-4">
-                      <Button size="lg" className="w-full text-lg" onClick={() => setShowAnalysis(true)}>
+                      <Button size="lg" className="w-full text-lg" onClick={() => setShowAnalysis(true)} disabled={!step5Checks.every(Boolean)}>
                         Analyze Pull Request
                       </Button>
                     </div>

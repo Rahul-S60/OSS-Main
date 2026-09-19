@@ -66,6 +66,7 @@ model UserProfile {
   streak          Int      @default(0)
   github_username String?
   location        String?
+  bio             String?
   languages       String[]
   
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)

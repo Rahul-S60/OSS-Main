@@ -6,10 +6,10 @@ import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 import { 
   Search, Bell, Menu, X, LayoutDashboard, Compass, 
-  GitMerge, Trophy, Award, UserCircle, Code2
+  GitMerge, Trophy, Award, UserCircle, Code2, LogOut
 } from "lucide-react";
 import { getUserProfile } from "@/app/actions/user";
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import { cn } from "@/lib/utils";
 
 interface Contribution {
@@ -110,7 +110,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           })}
         </div>
 
-        <div className="p-4 border-t border-[var(--color-border)]/50 shrink-0">
+        <div className="p-4 border-t border-[var(--color-border)]/50 shrink-0 flex flex-col gap-2">
           <Link href="/profile" className="flex items-center gap-3 p-2 rounded-lg hover:bg-[var(--color-elevated-surface)] transition-colors group">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={session?.user?.image || "https://github.com/ghost.png"} alt={session?.user?.name || "User"} className="w-10 h-10 rounded-full border border-[var(--color-border)]" />
@@ -119,6 +119,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <p className="text-xs text-[var(--color-primary-accent)] font-medium">{points} points</p>
             </div>
           </Link>
+          <button 
+            onClick={() => signOut({ callbackUrl: "/" })}
+            className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-red-500 hover:bg-red-500/10 transition-colors w-full"
+          >
+            <LogOut className="w-5 h-5" />
+            Logout
+          </button>
         </div>
       </aside>
 
@@ -181,6 +188,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   {item.name}
                 </Link>
               ))}
+            </div>
+            <div className="p-4 border-t border-[var(--color-border)] shrink-0">
+              <button 
+                onClick={() => signOut({ callbackUrl: "/" })}
+                className="flex items-center gap-3 px-3 py-3 w-full rounded-lg text-sm font-medium text-red-500 hover:bg-red-500/10 transition-colors"
+              >
+                <LogOut className="w-5 h-5" />
+                Logout
+              </button>
             </div>
           </motion.div>
         </div>

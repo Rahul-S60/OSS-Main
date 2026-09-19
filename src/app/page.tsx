@@ -3,13 +3,15 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { signIn } from "next-auth/react";
+import { useSession, signIn } from "next-auth/react";
 import { GitPullRequest as Github, ArrowRight, Code2, Compass, CheckCircle2, GitMerge } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 
 export default function LandingPage() {
   const router = useRouter();
+  const { data: session, status } = useSession();
   const [isConnecting, setIsConnecting] = useState(false);
+  const isLoading = status === "loading";
 
   const handleStart = async () => {
     setIsConnecting(true);
@@ -37,10 +39,21 @@ export default function LandingPage() {
             <a href="#how-it-works" className="hover:text-[var(--color-primary-text)] transition-colors">How it works</a>
             <a href="#features" className="hover:text-[var(--color-primary-text)] transition-colors">Features</a>
           </nav>
-          <Button variant="outline" size="sm" onClick={handleStart} disabled={isConnecting} className="gap-2">
-            <Github className="w-4 h-4" />
-            Login with GitHub
-          </Button>
+          {session ? (
+            <Button variant="outline" size="sm" onClick={() => router.push("/dashboard")} className="gap-2">
+              Dashboard <ArrowRight className="w-4 h-4" />
+            </Button>
+          ) : (
+            <div className="flex items-center gap-3">
+              <Button variant="ghost" size="sm" onClick={handleStart} disabled={isConnecting || isLoading} className="gap-2">
+                <Github className="w-4 h-4" />
+                Login
+              </Button>
+              <Button size="sm" onClick={handleStart} disabled={isConnecting || isLoading}>
+                Sign Up
+              </Button>
+            </div>
+          )}
         </div>
       </header>
 
@@ -75,25 +88,42 @@ export default function LandingPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
-            className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4"
+            className="w-full flex justify-center pt-4"
           >
-            <Button size="lg" onClick={handleStart} disabled={isConnecting} className="w-full sm:w-auto group">
-              {isConnecting ? (
-                <>
-                  <div className="w-4 h-4 mr-2 rounded-full border-2 border-white/20 border-t-white animate-spin" />
-                  Connecting to GitHub...
-                </>
-              ) : (
-                <>
-                  <Github className="mr-2 h-5 w-5" />
-                  Login with GitHub
-                  <ArrowRight className="ml-2 h-4 w-4 opacity-70 group-hover:translate-x-1 transition-transform" />
-                </>
-              )}
-            </Button>
-            <Button variant="secondary" size="lg" className="w-full sm:w-auto">
-              Explore how it works
-            </Button>
+            {session ? (
+              <div className="flex flex-col items-center gap-4 bg-[var(--color-elevated-surface)] border border-[var(--color-border)] p-6 rounded-2xl w-full max-w-md shadow-sm animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="flex items-center gap-4 w-full">
+                  <img src={session.user?.image || "https://github.com/ghost.png"} alt="User" className="w-12 h-12 rounded-full border border-[var(--color-border)]" />
+                  <div className="text-left flex-1 min-w-0">
+                    <p className="font-medium text-[var(--color-primary-text)] truncate">Welcome back, {session.user?.name}!</p>
+                    <p className="text-sm text-[var(--color-secondary-text)]">You are already logged in.</p>
+                  </div>
+                </div>
+                <Button size="lg" onClick={() => router.push("/dashboard")} className="w-full group">
+                  Go to Dashboard <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </Button>
+              </div>
+            ) : (
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full">
+                <Button size="lg" onClick={handleStart} disabled={isConnecting || isLoading} className="w-full sm:w-auto group">
+                  {isConnecting ? (
+                    <>
+                      <div className="w-4 h-4 mr-2 rounded-full border-2 border-white/20 border-t-white animate-spin" />
+                      Connecting...
+                    </>
+                  ) : (
+                    <>
+                      <Github className="mr-2 h-5 w-5" />
+                      Login
+                      <ArrowRight className="ml-2 h-4 w-4 opacity-70 group-hover:translate-x-1 transition-transform" />
+                    </>
+                  )}
+                </Button>
+                <Button variant="secondary" size="lg" onClick={handleStart} disabled={isConnecting || isLoading} className="w-full sm:w-auto">
+                  Sign Up
+                </Button>
+              </div>
+            )}
           </motion.div>
         </div>
 

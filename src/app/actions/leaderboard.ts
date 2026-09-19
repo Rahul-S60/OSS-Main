@@ -52,3 +52,16 @@ export async function getTopUsers(limit = 50) {
 
   return result;
 }
+
+export async function getUserRank(userId: string) {
+  const profile = await prisma.userProfile.findUnique({ where: { userId } });
+  if (!profile) return null;
+  
+  const higherUsers = await prisma.userProfile.count({
+    where: {
+      points: { gt: profile.points }
+    }
+  });
+  
+  return higherUsers + 1;
+}

@@ -87,3 +87,24 @@ export async function getUserProfile() {
   // Serialize to avoid Prisma object serialization errors in Client Components
   return JSON.parse(JSON.stringify(result));
 }
+
+export async function updateUserProfileDetails(name: string, bio: string) {
+  const session = await auth();
+  if (!session?.user?.id) throw new Error("Unauthorized");
+  
+  const userId = session.user.id;
+
+  // Update name in User table
+  await prisma.user.update({
+    where: { id: userId },
+    data: { name },
+  });
+
+  // Update bio in UserProfile table
+  await prisma.userProfile.update({
+    where: { userId },
+    data: { bio },
+  });
+
+  return { success: true };
+}

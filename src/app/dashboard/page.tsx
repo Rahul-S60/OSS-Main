@@ -8,6 +8,7 @@ import { fetchRecommendedIssues } from "@/app/actions/github";
 import { useSession } from "next-auth/react";
 import { achievements } from "@/data/achievements";
 import { getUserProfile } from "@/app/actions/user";
+import { getUserRank } from "@/app/actions/leaderboard";
 import { IssueCard } from "@/components/features/IssueCard";
 import { RecommendationDrawer } from "@/components/features/RecommendationDrawer";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
@@ -26,10 +27,12 @@ export default function Dashboard() {
     streak: 0,
     prMerged: false,
     activeIssueId: null,
+    activeIssueData: null,
     contributionStep: 0,
     issueEnrolled: false,
     onboardingCompleted: true,
     unlockedBadges: [],
+    rank: 0,
   });
   
   useEffect(() => {
@@ -48,15 +51,22 @@ export default function Dashboard() {
           const hasMerged = profileData.contributions?.some((c: any) => c.status === "merged");
           const hasEnrolled = profileData.contributions && profileData.contributions.length > 0;
           
+          let userRank = 0;
+          if (session?.user?.id) {
+            userRank = await getUserRank(session.user.id) || 0;
+          }
+          
           setDbState({
             points: profileData.points,
             streak: profileData.streak,
             prMerged: hasMerged,
             activeIssueId: activeContribution?.issueId || null,
+            activeIssueData: activeContribution?.issue || null,
             contributionStep: activeContribution ? parseInt(activeContribution.status) || 0 : 0,
             issueEnrolled: hasEnrolled,
             onboardingCompleted: true,
             unlockedBadges: profileData.unlockedBadges || [],
+            rank: userRank,
           });
         }
       } catch (error) {
@@ -66,9 +76,9 @@ export default function Dashboard() {
       }
     }
     loadData();
-  }, []);
+  }, [session?.user?.id]);
 
-  const activeIssue = dbState.activeIssueId ? issuesList.find(i => i.id === dbState.activeIssueId) : null;
+  const activeIssue = dbState.activeIssueData;
 
   const handleWhyClick = (id: string) => {
     const issue = issuesList.find(i => i.id === id);
@@ -107,7 +117,7 @@ export default function Dashboard() {
         {[
           { label: "Points", value: dbState.points, icon: Trophy, color: "text-amber-400" },
           { label: "Contributions", value: dbState.prMerged ? 1 : 0, icon: GitMerge, color: "text-[var(--color-primary-accent)]" },
-          { label: "Community Rank", value: dbState.prMerged ? "#183" : "#247", icon: Trophy, color: "text-[var(--color-success)]" },
+          { label: "Community Rank", value: dbState.rank ? `#${dbState.rank}` : "Unranked", icon: Trophy, color: "text-[var(--color-success)]" },
           { label: "Day Streak", value: dbState.streak, icon: Flame, color: "text-orange-500" },
         ].map((metric, i) => (
           <motion.div

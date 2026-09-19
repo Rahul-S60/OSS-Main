@@ -1,15 +1,15 @@
 @import "tailwindcss";
 
 @theme {
-  --color-background: #09090B;
-  --color-secondary-bg: #111113;
-  --color-card-bg: #151518;
-  --color-elevated-surface: #1A1A1F;
-  --color-border: #27272A;
+  --color-background: var(--bg);
+  --color-secondary-bg: var(--secondary-bg);
+  --color-card-bg: var(--card-bg);
+  --color-elevated-surface: var(--elevated-surface);
+  --color-border: var(--border);
 
-  --color-primary-text: #F4F4F5;
-  --color-secondary-text: #A1A1AA;
-  --color-muted-text: #71717A;
+  --color-primary-text: var(--primary-text);
+  --color-secondary-text: var(--secondary-text);
+  --color-muted-text: var(--muted-text);
 
   --color-primary-accent: #6366f1; /* indigo-500 */
   --color-primary-accent-hover: #4f46e5; /* indigo-600 */
@@ -23,6 +23,34 @@
 
 :root {
   color-scheme: dark;
+  --bg: #09090B;
+  --secondary-bg: #111113;
+  --card-bg: #151518;
+  --elevated-surface: #1A1A1F;
+  --border: #27272A;
+  
+  --primary-text: #F4F4F5;
+  --secondary-text: #A1A1AA;
+  --muted-text: #71717A;
+  
+  --glass-bg-color: rgba(21, 21, 24, 0.7);
+  --glass-shadow: none;
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #FFFFFF;
+  --secondary-bg: #F1F5F9; /* slate-100 */
+  --card-bg: #FFFFFF;
+  --elevated-surface: #F8FAFC; /* slate-50 */
+  --border: #CBD5E1; /* slate-300 (darker for contrast) */
+  
+  --primary-text: #0F172A; /* slate-900 */
+  --secondary-text: #475569; /* slate-600 */
+  --muted-text: #64748B; /* slate-500 */
+  
+  --glass-bg-color: rgba(255, 255, 255, 0.85);
+  --glass-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.05), 0 4px 6px -4px rgb(0 0 0 / 0.05);
 }
 
 body {
@@ -35,9 +63,10 @@ body {
 
 /* Custom Utilities */
 @utility glass {
-  background: rgba(21, 21, 24, 0.7);
+  background: var(--glass-bg-color);
   backdrop-filter: blur(12px);
   border: 1px solid var(--color-border);
+  box-shadow: var(--glass-shadow);
 }
 
 @utility text-balance {

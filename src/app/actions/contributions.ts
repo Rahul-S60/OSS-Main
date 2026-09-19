@@ -62,6 +62,60 @@ export async function enrollInIssue(issueData: {
   return { success: true };
 }
 
+export async function saveIssueForLater(issueData: {
+  id: string;
+  title: string;
+  repository: string;
+  description: string;
+  difficulty: string;
+  estimatedEffort: string;
+  languages: string[];
+  technologies: string[];
+}) {
+  const session = await auth();
+  if (!session?.user?.id) throw new Error("Unauthorized");
+  const userId = session.user.id;
+
+  const issue = await prisma.issue.upsert({
+    where: { id: issueData.id },
+    update: {
+      title: issueData.title,
+      repository: issueData.repository,
+      description: issueData.description,
+      difficulty: issueData.difficulty,
+      estimatedEffort: issueData.estimatedEffort,
+    },
+    create: {
+      id: issueData.id,
+      title: issueData.title,
+      repository: issueData.repository,
+      description: issueData.description,
+      difficulty: issueData.difficulty,
+      estimatedEffort: issueData.estimatedEffort,
+      languages: issueData.languages,
+      technologies: issueData.technologies,
+    },
+  });
+
+  const existing = await prisma.contribution.findFirst({
+    where: { userId, issueId: issue.id },
+  });
+
+  if (!existing) {
+    await prisma.contribution.create({
+      data: {
+        userId,
+        issueId: issue.id,
+        status: "saved",
+      },
+    });
+  }
+
+  revalidatePath('/journey');
+  revalidatePath('/explore');
+  return { success: true };
+}
+
 export async function advanceContributionStep(issueId: string, currentStep: number) {
   const session = await auth();
   if (!session?.user?.id) throw new Error("Unauthorized");

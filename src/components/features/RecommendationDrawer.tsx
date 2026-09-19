@@ -3,8 +3,10 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ExternalLink } from "lucide-react";
 import Link from "next/link";
+import { useState } from "react";
 import { Issue } from "@/data/issues";
 import { Button } from "@/components/ui/Button";
+import { saveIssueForLater } from "@/app/actions/contributions";
 
 interface RecommendationDrawerProps {
   isOpen: boolean;
@@ -13,6 +15,20 @@ interface RecommendationDrawerProps {
 }
 
 export function RecommendationDrawer({ isOpen, onClose, issue }: RecommendationDrawerProps) {
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleSaveForLater = async () => {
+    if (!issue) return;
+    setIsSaving(true);
+    try {
+      await saveIssueForLater(issue as any);
+      onClose();
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   return (
     <AnimatePresence>
@@ -139,10 +155,18 @@ export function RecommendationDrawer({ isOpen, onClose, issue }: RecommendationD
 
             <div className="p-6 border-t border-[var(--color-border)] flex flex-col gap-3">
               <Button size="lg" className="w-full group" asChild>
-                <Link href={`/issues/${issue?.id}`}>
-                  View full issue details
+                <Link href={`/contributions/${issue?.id}`}>
+                  Enroll in Issue
                   <ExternalLink className="w-4 h-4 ml-2 opacity-70 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
                 </Link>
+              </Button>
+              <Button 
+                variant="secondary" 
+                className="w-full"
+                onClick={handleSaveForLater}
+                disabled={isSaving}
+              >
+                {isSaving ? "Saving..." : "Save for later"}
               </Button>
               {issue?.url && (
                 <Button variant="ghost" className="w-full group text-[var(--color-secondary-text)]" asChild>

@@ -25,7 +25,7 @@ interface UserProfile {
 const navItems = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "Explore", href: "/explore", icon: Compass },
-  { name: "My Journey", href: "/contributions/current", icon: GitMerge },
+  { name: "My Journey", href: "/journey", icon: GitMerge },
   { name: "Leaderboard", href: "/leaderboard", icon: Trophy },
   { name: "Achievements", href: "/achievements", icon: Award },
   { name: "Profile", href: "/profile", icon: UserCircle },
@@ -90,12 +90,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className="flex-1 overflow-y-auto py-6 px-3 flex flex-col gap-1">
           <p className="px-3 text-xs font-semibold text-[var(--color-muted-text)] uppercase tracking-wider mb-2">Menu</p>
           {navItems.map((item) => {
-            const isActive = pathname.startsWith(item.href) && 
-              (item.href !== "/contributions/current" || activeIssueId);
+            const isActive = pathname.startsWith(item.href);
             return (
               <Link 
                 key={item.name} 
-                href={item.href === "/contributions/current" && activeIssueId ? `/contributions/${activeIssueId}` : item.href}
+                href={item.href}
                 className={cn(
                   "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors relative",
                   isActive 

@@ -8,9 +8,10 @@ import { Issue } from "@/data/issues";
 interface IssueCardProps {
   issue: Issue;
   onWhyClick?: (issueId: string) => void;
+  userStatus?: string;
 }
 
-export function IssueCard({ issue, onWhyClick }: IssueCardProps) {
+export function IssueCard({ issue, onWhyClick, userStatus }: IssueCardProps) {
   const getDifficultyColor = (diff: string) => {
     switch (diff) {
       case "Beginner": return "success";
@@ -26,11 +27,24 @@ export function IssueCard({ issue, onWhyClick }: IssueCardProps) {
       className="group relative flex flex-col rounded-xl border border-[var(--color-border)] bg-[var(--color-card-bg)] shadow-sm overflow-hidden"
     >
       <div className="p-5 flex-1 flex flex-col">
-        <div className="flex items-center gap-2 mb-3">
-          <CircleDot className="w-4 h-4 text-[var(--color-success)]" />
-          <span className="text-xs font-semibold text-[var(--color-muted-text)] tracking-wider uppercase">
-            {issue.labels.includes("good first issue") ? "GOOD FIRST ISSUE" : "OPEN ISSUE"}
-          </span>
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <CircleDot className="w-4 h-4 text-[var(--color-success)]" />
+            <span className="text-xs font-semibold text-[var(--color-muted-text)] tracking-wider uppercase">
+              {issue.labels.includes("good first issue") ? "GOOD FIRST ISSUE" : "OPEN ISSUE"}
+            </span>
+          </div>
+          {userStatus && (
+            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${
+              userStatus === "merged" 
+                ? "bg-[var(--color-success)]/10 text-[var(--color-success)] border border-[var(--color-success)]/20" 
+                : userStatus === "saved"
+                ? "bg-blue-500/10 text-blue-500 border border-blue-500/20"
+                : "bg-[var(--color-primary-accent)]/10 text-[var(--color-primary-accent)] border border-[var(--color-primary-accent)]/20"
+            }`}>
+              {userStatus === "merged" ? "Completed" : userStatus === "saved" ? "Saved" : "Ongoing"}
+            </span>
+          )}
         </div>
 
         <h3 className="text-lg font-semibold text-[var(--color-primary-text)] leading-tight mb-2">

@@ -33,6 +33,7 @@ export default function Dashboard() {
     onboardingCompleted: true,
     unlockedBadges: [],
     rank: 0,
+    userStatuses: {} as Record<string, string>,
   });
   
   useEffect(() => {
@@ -56,6 +57,13 @@ export default function Dashboard() {
             userRank = await getUserRank(session.user.id) || 0;
           }
           
+          const userStatuses: Record<string, string> = {};
+          if (profileData.contributions) {
+            profileData.contributions.forEach((c: any) => {
+              userStatuses[c.issueId] = c.status;
+            });
+          }
+          
           setDbState({
             points: profileData.points,
             streak: profileData.streak,
@@ -67,6 +75,7 @@ export default function Dashboard() {
             onboardingCompleted: true,
             unlockedBadges: profileData.unlockedBadges || [],
             rank: userRank,
+            userStatuses,
           });
         }
       } catch (error) {
@@ -206,7 +215,11 @@ export default function Dashboard() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: idx * 0.1 }}
                   >
-                    <IssueCard issue={issue} onWhyClick={handleWhyClick} />
+                    <IssueCard 
+                      issue={issue} 
+                      onWhyClick={handleWhyClick} 
+                      userStatus={dbState.userStatuses[issue.id]}
+                    />
                   </motion.div>
                 ))}
               </div>

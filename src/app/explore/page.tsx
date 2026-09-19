@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { Search, Filter, SortDesc, Loader2 } from "lucide-react";
 import { Issue } from "@/data/issues";
 import { fetchRecommendedIssues } from "@/app/actions/github";
+import { getUserProfile } from "@/app/actions/user";
 import { IssueCard } from "@/components/features/IssueCard";
 import { RecommendationDrawer } from "@/components/features/RecommendationDrawer";
 
@@ -12,6 +13,7 @@ export default function ExploreIssues() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [selectedIssue, setSelectedIssue] = useState<Issue | null>(null);
   const [issuesList, setIssuesList] = useState<Issue[]>([]);
+  const [userStatuses, setUserStatuses] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   
   // Filter states
@@ -20,17 +22,28 @@ export default function ExploreIssues() {
   const [difficultyFilter, setDifficultyFilter] = useState("All Difficulties");
 
   useEffect(() => {
-    async function loadIssues() {
+    async function loadData() {
       try {
-        const data = await fetchRecommendedIssues();
-        setIssuesList(data);
+        const [issuesData, profileData] = await Promise.all([
+          fetchRecommendedIssues(),
+          getUserProfile()
+        ]);
+        setIssuesList(issuesData);
+        
+        if (profileData?.contributions) {
+          const statuses: Record<string, string> = {};
+          profileData.contributions.forEach((c: any) => {
+            statuses[c.issueId] = c.status;
+          });
+          setUserStatuses(statuses);
+        }
       } catch (error) {
         console.error(error);
       } finally {
         setLoading(false);
       }
     }
-    loadIssues();
+    loadData();
   }, []);
 
   const handleWhyClick = (id: string) => {
@@ -119,7 +132,11 @@ export default function ExploreIssues() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: idx * 0.05 }}
               >
-                <IssueCard issue={issue} onWhyClick={handleWhyClick} />
+                <IssueCard 
+                  issue={issue} 
+                  onWhyClick={handleWhyClick}
+                  userStatus={userStatuses[issue.id]}
+                />
               </motion.div>
             ))
           ) : (

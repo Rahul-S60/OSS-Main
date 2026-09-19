@@ -84,6 +84,7 @@ model Issue {
   estimatedEffort String
   languages       String[]
   technologies    String[]
+  points          Int      @default(100)
   
   contributions Contribution[]
 

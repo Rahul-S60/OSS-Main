@@ -17,6 +17,7 @@ export type Issue = {
   comments: number;
   contributors: number;
   url?: string;
+  points: number;
 };
 
 export const issues: Issue[] = [];

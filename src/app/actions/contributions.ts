@@ -15,6 +15,7 @@ export async function enrollInIssue(issueData: {
   estimatedEffort: string;
   languages: string[];
   technologies: string[];
+  points: number;
 }) {
   const session = await auth();
   if (!session?.user?.id) throw new Error("Unauthorized");
@@ -29,6 +30,7 @@ export async function enrollInIssue(issueData: {
       description: issueData.description,
       difficulty: issueData.difficulty,
       estimatedEffort: issueData.estimatedEffort,
+      points: issueData.points,
     },
     create: {
       id: issueData.id,
@@ -39,6 +41,7 @@ export async function enrollInIssue(issueData: {
       estimatedEffort: issueData.estimatedEffort,
       languages: issueData.languages,
       technologies: issueData.technologies,
+      points: issueData.points,
     },
   });
 
@@ -71,6 +74,7 @@ export async function saveIssueForLater(issueData: {
   estimatedEffort: string;
   languages: string[];
   technologies: string[];
+  points: number;
 }) {
   const session = await auth();
   if (!session?.user?.id) throw new Error("Unauthorized");
@@ -84,6 +88,7 @@ export async function saveIssueForLater(issueData: {
       description: issueData.description,
       difficulty: issueData.difficulty,
       estimatedEffort: issueData.estimatedEffort,
+      points: issueData.points,
     },
     create: {
       id: issueData.id,
@@ -94,6 +99,7 @@ export async function saveIssueForLater(issueData: {
       estimatedEffort: issueData.estimatedEffort,
       languages: issueData.languages,
       technologies: issueData.technologies,
+      points: issueData.points,
     },
   });
 
@@ -183,11 +189,12 @@ export async function mergePullRequest(issueId: string) {
       data: { status: "merged" },
     });
 
-    // 3. Award 100 points
+    // 3. Award issue points
+    const pointsToAward = issue.points ?? 100;
     await tx.userProfile.update({
       where: { userId },
       data: {
-        points: { increment: 100 },
+        points: { increment: pointsToAward },
       },
     });
 

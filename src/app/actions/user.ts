@@ -42,9 +42,10 @@ export async function getUserProfile() {
     orderBy: { updatedAt: 'desc' },
   });
 
-  // Calculate true points based on merged PRs (e.g., 1250 points per merged PR)
-  const mergedCount = contributions.filter(c => c.status === "merged").length;
-  const expectedPoints = mergedCount * 1250;
+  // Calculate true points based on merged PRs by summing the issue points
+  const mergedContributions = contributions.filter(c => c.status === "merged");
+  const mergedCount = mergedContributions.length;
+  const expectedPoints = mergedContributions.reduce((total, c) => total + (c.issue.points ?? 100), 0);
   
   // Auto-sync profile points if out of date
   if (profile.points !== expectedPoints) {
@@ -67,6 +68,15 @@ export async function getUserProfile() {
   if (contributions.length > 0 && !unlockedSet.has("first_issue")) newBadges.push("first_issue");
   if (mergedCount > 0 && !unlockedSet.has("first_pr")) newBadges.push("first_pr");
   if (mergedCount >= 3 && !unlockedSet.has("three_prs")) newBadges.push("three_prs");
+  if (mergedCount >= 10 && !unlockedSet.has("contributions_10")) newBadges.push("contributions_10");
+  if (mergedCount >= 50 && !unlockedSet.has("contributions_50")) newBadges.push("contributions_50");
+  if (mergedCount >= 100 && !unlockedSet.has("contributions_100")) newBadges.push("contributions_100");
+
+  const streak = profile.streak;
+  if (streak >= 7 && !unlockedSet.has("week_warrior")) newBadges.push("week_warrior");
+  if (streak >= 50 && !unlockedSet.has("streak_50")) newBadges.push("streak_50");
+  if (streak >= 100 && !unlockedSet.has("streak_100")) newBadges.push("streak_100");
+  if (streak >= 200 && !unlockedSet.has("streak_200")) newBadges.push("streak_200");
 
   if (newBadges.length > 0) {
     await prisma.achievement.createMany({

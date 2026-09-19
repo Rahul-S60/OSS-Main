@@ -79,9 +79,16 @@ export function IssueCard({ issue, onWhyClick, userStatus }: IssueCardProps) {
 
       <div className="px-5 py-4 border-t border-[var(--color-border)] bg-[var(--color-elevated-surface)]/50">
         <div className="flex items-center justify-between mb-4">
-          <Badge variant={getDifficultyColor(issue.difficulty)} className="uppercase text-[10px]">
-            {issue.difficulty}
-          </Badge>
+          <div className="flex items-center gap-2">
+            <Badge variant={getDifficultyColor(issue.difficulty)} className="uppercase text-[10px]">
+              {issue.difficulty}
+            </Badge>
+            {issue.points && (
+              <Badge variant="outline" className="text-[10px] font-bold text-[var(--color-primary-accent)] border-[var(--color-primary-accent)]/30 bg-[var(--color-primary-accent)]/5">
+                +{issue.points} PTS
+              </Badge>
+            )}
+          </div>
           <div className="flex items-center gap-1.5">
             <BarChart className="w-4 h-4 text-[var(--color-primary-accent)]" />
             <span className="text-sm font-semibold text-[var(--color-primary-accent)]">{issue.matchScore}% MATCH</span>

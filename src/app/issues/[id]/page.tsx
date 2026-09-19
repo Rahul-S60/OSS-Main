@@ -55,6 +55,7 @@ export default function IssueDetailPage() {
         estimatedEffort: issue.estimatedEffort,
         languages: issue.languages,
         technologies: issue.technologies,
+        points: issue.points,
       });
       
       setEnrollmentSuccess(true);

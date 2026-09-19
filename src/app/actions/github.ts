@@ -55,6 +55,7 @@ export async function fetchRecommendedIssues(): Promise<Issue[]> {
         comments: item.comments || 0,
         contributors: Math.floor(Math.random() * 500) + 10, // Simulated
         url: item.html_url,
+        points: difficulty === "Beginner" ? 50 : difficulty === "Intermediate" ? 150 : 300,
       };
     });
   } catch (error) {

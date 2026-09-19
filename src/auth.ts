@@ -1,7 +1,11 @@
 import NextAuth from "next-auth";
 import GitHub from "next-auth/providers/github";
+import { PrismaAdapter } from "@auth/prisma-adapter";
+import { prisma } from "@/lib/prisma";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  adapter: PrismaAdapter(prisma),
+  session: { strategy: "jwt" },
   providers: [
     GitHub({
       clientId: process.env.GITHUB_ID,
@@ -17,10 +21,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           name: profile.name ?? profile.login,
           email: profile.email,
           image: profile.avatar_url,
-          username: profile.login,
-          followers: profile.followers,
-          public_repos: profile.public_repos,
-          location: profile.location,
         };
       },
     }),
@@ -71,6 +71,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     async session({ session, token }) {
       if (token) {
         // @ts-ignore
+        session.user.id = token.sub;
+        // @ts-ignore
         session.user.username = token.username;
         // @ts-ignore
         session.user.followers = token.followers;
@@ -82,6 +84,18 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         session.user.languages = token.languages || ["JavaScript", "TypeScript", "React"];
       }
       return session;
+    },
+  },
+  events: {
+    async createUser({ user }) {
+      // Create an empty profile for new users
+      await prisma.userProfile.create({
+        data: {
+          userId: user.id as string,
+          points: 0,
+          streak: 0,
+        },
+      });
     },
   },
 });

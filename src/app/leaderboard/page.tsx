@@ -4,12 +4,17 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { Trophy, GitMerge, Flame } from "lucide-react";
 import { useSession } from "next-auth/react";
-import { useDemoStore } from "@/lib/store";
+import { getUserProfile } from "@/app/actions/user";
+import { useEffect } from "react";
 
 export default function LeaderboardPage() {
   const { data: session } = useSession();
-  const { state } = useDemoStore();
   const [activeTab, setActiveTab] = useState("This week");
+  const [profile, setProfile] = useState<any>(null);
+
+  useEffect(() => {
+    getUserProfile().then(data => setProfile(data));
+  }, []);
 
   const mockUsers = [
     { rank: 1, name: "Sarah Chen", handle: "@sarahc", avatar: "https://i.pravatar.cc/150?u=sarah", merged: 42, points: 4200, streak: 14 },
@@ -20,7 +25,8 @@ export default function LeaderboardPage() {
   ];
 
   // Insert current user based on points for demo
-  const userRank = state.prMerged ? 183 : 247;
+  const prMerged = profile?.contributions?.some((c: any) => c.status === "merged");
+  const userRank = prMerged ? 183 : 247;
   
   return (
     <div className="max-w-5xl mx-auto pb-12 space-y-8">
@@ -137,15 +143,15 @@ export default function LeaderboardPage() {
                 </td>
                 <td className="px-6 py-4 text-right text-sm">
                   <div className="flex items-center justify-end gap-1.5 font-medium text-[var(--color-primary-text)]">
-                    {state.prMerged ? 1 : 0} <GitMerge className="w-4 h-4 text-[var(--color-muted-text)]" />
+                    {prMerged ? 1 : 0} <GitMerge className="w-4 h-4 text-[var(--color-muted-text)]" />
                   </div>
                 </td>
                 <td className="px-6 py-4 text-right font-bold text-[var(--color-primary-accent)]">
-                  {state.points}
+                  {profile?.points || 0}
                 </td>
                 <td className="px-6 py-4 text-right text-sm">
                   <div className="flex items-center justify-end gap-1.5 font-medium text-[var(--color-primary-text)]">
-                    {state.streak} <Flame className="w-4 h-4 text-orange-500" />
+                    {profile?.streak || 0} <Flame className="w-4 h-4 text-orange-500" />
                   </div>
                 </td>
               </motion.tr>

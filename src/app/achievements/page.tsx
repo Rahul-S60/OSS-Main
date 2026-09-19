@@ -4,10 +4,17 @@ import { motion } from "framer-motion";
 import { Lock, CheckCircle2 } from "lucide-react";
 import * as Icons from "lucide-react";
 import { achievements } from "@/data/achievements";
-import { useDemoStore } from "@/lib/store";
+import { useState, useEffect } from "react";
+import { getUserProfile } from "@/app/actions/user";
 
 export default function AchievementsPage() {
-  const { state } = useDemoStore();
+  const [unlockedBadges, setUnlockedBadges] = useState<string[]>([]);
+
+  useEffect(() => {
+    getUserProfile().then(p => {
+      if (p) setUnlockedBadges(p.unlockedBadges || []);
+    });
+  }, []);
 
   return (
     <div className="max-w-6xl mx-auto space-y-8 pb-12">
@@ -20,7 +27,7 @@ export default function AchievementsPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {achievements.map((badge, idx) => {
-          const isUnlocked = state.unlockedBadges.includes(badge.id);
+          const isUnlocked = unlockedBadges.includes(badge.id);
           // @ts-ignore
           const Icon = Icons[badge.icon] || Icons.Trophy;
 

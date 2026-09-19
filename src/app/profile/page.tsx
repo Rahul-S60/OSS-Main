@@ -5,7 +5,8 @@ import { motion } from "framer-motion";
 import { MapPin, Link as LinkIcon, GitPullRequest as Github, Share2, Copy, Trophy, GitMerge, Flame } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { achievements } from "@/data/achievements";
-import { useDemoStore } from "@/lib/store";
+import { getUserProfile } from "@/app/actions/user";
+import { useEffect } from "react";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { useToast } from "@/components/ui/Toast";
@@ -13,11 +14,17 @@ import * as Icons from "lucide-react";
 
 export default function ProfilePage() {
   const { data: session } = useSession();
-  const { state } = useDemoStore();
+  const [profile, setProfile] = useState<any>(null);
   const { addToast } = useToast();
   const [isSharing, setIsSharing] = useState(false);
+  const [heatmap, setHeatmap] = useState<number[][]>([]);
+  
+  useEffect(() => {
+    getUserProfile().then(data => setProfile(data));
+  }, []);
 
-  const unlockedBadges = achievements.filter(b => state.unlockedBadges.includes(b.id));
+  const unlockedBadgesList = profile?.unlockedBadges || [];
+  const unlockedBadges = achievements.filter(b => unlockedBadgesList.includes(b.id));
 
   const handleShare = () => {
     setIsSharing(true);
@@ -27,36 +34,35 @@ export default function ProfilePage() {
     }, 500);
   };
 
-  // Generate a mock activity heatmap
-  const generateHeatmap = () => {
-    const weeks = 20;
-    const days = 7;
-    const grid = [];
-    for (let w = 0; w < weeks; w++) {
-      const week = [];
-      for (let d = 0; d < days; d++) {
-        // More activity towards the end (simulating recent streak)
-        const isRecent = w > 16;
-        const probability = isRecent ? 0.6 : 0.2;
-        let level = 0;
-        
-        if (Math.random() < probability) {
-          level = Math.floor(Math.random() * 3) + 1; // 1, 2, or 3
+  useEffect(() => {
+    const generateHeatmap = () => {
+      const weeks = 20;
+      const days = 7;
+      const grid = [];
+      for (let w = 0; w < weeks; w++) {
+        const week = [];
+        for (let d = 0; d < days; d++) {
+          const isRecent = w > 16;
+          const probability = isRecent ? 0.6 : 0.2;
+          let level = 0;
+          
+          if (Math.random() < probability) {
+            level = Math.floor(Math.random() * 3) + 1;
+          }
+          
+          if (profile?.prMerged && w === weeks - 1 && d === days - 2) {
+            level = 4;
+          }
+          
+          week.push(level);
         }
-        
-        // Add current contribution if merged
-        if (state.prMerged && w === weeks - 1 && d === days - 2) {
-          level = 4; // Max activity
-        }
-        
-        week.push(level);
+        grid.push(week);
       }
-      grid.push(week);
-    }
-    return grid;
-  };
+      return grid;
+    };
 
-  const heatmap = generateHeatmap();
+    setHeatmap(generateHeatmap());
+  }, [profile?.prMerged]);
 
   return (
     <div className="max-w-5xl mx-auto space-y-8 pb-12">
@@ -95,10 +101,10 @@ export default function ProfilePage() {
 
             <div className="md:col-span-2 grid grid-cols-2 sm:grid-cols-4 gap-4">
               {[
-                { label: "Points", value: state.points, icon: Trophy, color: "text-amber-400" },
-                { label: "Merged PRs", value: state.prMerged ? 1 : 0, icon: GitMerge, color: "text-[var(--color-primary-accent)]" },
-                { label: "Contributions", value: state.issueEnrolled ? 1 : 0, icon: Github, color: "text-[var(--color-primary-text)]" },
-                { label: "Day Streak", value: state.streak, icon: Flame, color: "text-orange-500" },
+                { label: "Points", value: profile?.points || 0, icon: Trophy, color: "text-amber-400" },
+                { label: "Merged PRs", value: profile?.prMerged ? 1 : 0, icon: GitMerge, color: "text-[var(--color-primary-accent)]" },
+                { label: "Contributions", value: profile?.issueEnrolled ? 1 : 0, icon: Github, color: "text-[var(--color-primary-text)]" },
+                { label: "Day Streak", value: profile?.streak || 0, icon: Flame, color: "text-orange-500" },
               ].map(stat => (
                 <div key={stat.label} className="p-4 rounded-xl border border-[var(--color-border)] bg-[var(--color-elevated-surface)]/50 text-center">
                   <stat.icon className={`w-5 h-5 mx-auto mb-2 ${stat.color}`} />
@@ -117,7 +123,7 @@ export default function ProfilePage() {
           <section className="bg-[var(--color-card-bg)] border border-[var(--color-border)] rounded-2xl p-6">
             <h2 className="text-lg font-semibold mb-6 flex items-center justify-between">
               Contribution Activity
-              <span className="text-sm font-normal text-[var(--color-secondary-text)]">{state.issueEnrolled ? "2 contributions in the last year" : "0 contributions in the last year"}</span>
+              <span className="text-sm font-normal text-[var(--color-secondary-text)]">{profile?.issueEnrolled ? "2 contributions in the last year" : "0 contributions in the last year"}</span>
             </h2>
             <div className="overflow-x-auto pb-4">
               <div className="flex gap-1 min-w-max">
@@ -145,7 +151,7 @@ export default function ProfilePage() {
           <section className="space-y-4">
             <h2 className="text-lg font-semibold">Recent History</h2>
             <div className="bg-[var(--color-card-bg)] border border-[var(--color-border)] rounded-2xl overflow-hidden">
-              {state.prMerged ? (
+              {profile?.prMerged ? (
                 <div className="p-4 border-b border-[var(--color-border)] flex items-start gap-4">
                   <div className="mt-1 w-8 h-8 rounded-full bg-[var(--color-success)]/10 flex items-center justify-center shrink-0">
                     <GitMerge className="w-4 h-4 text-[var(--color-success)]" />
@@ -157,7 +163,7 @@ export default function ProfilePage() {
                   </div>
                 </div>
               ) : null}
-              {state.onboardingCompleted ? (
+              {profile?.onboardingCompleted ? (
                 <div className="p-4 flex items-start gap-4">
                   <div className="mt-1 w-8 h-8 rounded-full bg-[var(--color-elevated-surface)] flex items-center justify-center shrink-0">
                     <Github className="w-4 h-4 text-[var(--color-muted-text)]" />

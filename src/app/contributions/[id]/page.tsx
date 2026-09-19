@@ -9,7 +9,8 @@ import {
 } from "lucide-react";
 import { Issue } from "@/data/issues";
 import { fetchRecommendedIssues } from "@/app/actions/github";
-import { useDemoStore } from "@/lib/store";
+import { getUserProfile } from "@/app/actions/user";
+import { advanceContributionStep, submitPullRequest, mergePullRequest } from "@/app/actions/contributions";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { PRAnalysis } from "@/components/features/PRAnalysis";
@@ -29,30 +30,41 @@ const STEPS = [
 export default function ContributionWorkspace() {
   const params = useParams();
   const router = useRouter();
-  const { state, updateState } = useDemoStore();
   const { addToast } = useToast();
   
   const [issue, setIssue] = useState<Issue | null>(null);
   const [loading, setLoading] = useState(true);
-
-  const issueId = params.id as string;
+  const [currentStep, setCurrentStep] = useState(0);
   
+  const issueId = params.id as string;
+
   useEffect(() => {
-    async function loadIssue() {
+    async function loadData() {
       try {
-        const data = await fetchRecommendedIssues();
-        const found = data.find(i => i.id === issueId);
+        const [issuesData, profileData] = await Promise.all([
+          fetchRecommendedIssues(),
+          getUserProfile()
+        ]);
+        
+        const found = issuesData.find(i => i.id === issueId);
         setIssue(found || null);
+        
+        if (profileData) {
+          const contribution = profileData.contributions?.find((c: any) => c.issueId === issueId);
+          if (contribution) {
+            if (contribution.status === "pr_submitted") setCurrentStep(4);
+            else if (contribution.status === "merged") setCurrentStep(5);
+            else setCurrentStep(parseInt(contribution.status) || 0);
+          }
+        }
       } catch (error) {
         console.error(error);
       } finally {
         setLoading(false);
       }
     }
-    loadIssue();
+    loadData();
   }, [issueId]);
-  
-  const currentStep = state.contributionStep;
   
   const [copied, setCopied] = useState<string | null>(null);
   const [showAnalysis, setShowAnalysis] = useState(false);
@@ -62,9 +74,15 @@ export default function ContributionWorkspace() {
   if (loading) return <div className="p-8 flex justify-center"><div className="w-8 h-8 rounded-full border-2 border-[var(--color-primary-accent)] border-t-transparent animate-spin" /></div>;
   if (!issue) return <div className="p-8">Contribution not found</div>;
 
-  const nextStep = () => {
+  const nextStep = async () => {
     if (currentStep < STEPS.length - 1) {
-      updateState({ contributionStep: currentStep + 1 });
+      const next = currentStep + 1;
+      setCurrentStep(next);
+      try {
+        await advanceContributionStep(issueId, currentStep);
+      } catch (error) {
+        console.error("Failed to advance step", error);
+      }
     }
   };
 
@@ -75,22 +93,26 @@ export default function ContributionWorkspace() {
     setTimeout(() => setCopied(null), 2000);
   };
 
-  const handlePRSubmit = () => {
-    updateState({ prSubmitted: true });
-    nextStep();
+  const handlePRSubmit = async () => {
+    setCurrentStep(4);
+    try {
+      await submitPullRequest(issueId);
+      nextStep();
+    } catch (e) {
+      console.error(e);
+    }
   };
 
-  const simulateMerge = () => {
+  const simulateMerge = async () => {
     setIsSimulatingMerge(true);
-    setTimeout(() => {
+    try {
+      await mergePullRequest(issueId);
       setIsSimulatingMerge(false);
-      updateState({ 
-        prMerged: true, 
-        points: state.points + 100,
-        unlockedBadges: [...state.unlockedBadges, "first_merge"]
-      });
       setShowSuccess(true);
-    }, 2500);
+    } catch (error) {
+      console.error("Failed to merge", error);
+      setIsSimulatingMerge(false);
+    }
   };
 
   const onContinueAfterMerge = () => {

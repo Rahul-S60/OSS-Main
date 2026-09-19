@@ -7,7 +7,7 @@ import { Issue } from "@/data/issues";
 import { fetchRecommendedIssues } from "@/app/actions/github";
 import { useSession } from "next-auth/react";
 import { achievements } from "@/data/achievements";
-import { useDemoStore } from "@/lib/store";
+import { getUserProfile } from "@/app/actions/user";
 import { IssueCard } from "@/components/features/IssueCard";
 import { RecommendationDrawer } from "@/components/features/RecommendationDrawer";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
@@ -16,27 +16,59 @@ import { ArrowRight, CheckCircle2, CircleDashed, Circle, GitMerge, Trophy, Flame
 
 export default function Dashboard() {
   const { data: session } = useSession();
-  const { state } = useDemoStore();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [selectedIssue, setSelectedIssue] = useState<Issue | null>(null);
   const [issuesList, setIssuesList] = useState<Issue[]>([]);
   const [loading, setLoading] = useState(true);
-
+  
+  const [dbState, setDbState] = useState<any>({
+    points: 0,
+    streak: 0,
+    prMerged: false,
+    activeIssueId: null,
+    contributionStep: 0,
+    issueEnrolled: false,
+    onboardingCompleted: true,
+    unlockedBadges: [],
+  });
+  
   useEffect(() => {
-    async function loadIssues() {
+    async function loadData() {
       try {
-        const data = await fetchRecommendedIssues();
-        setIssuesList(data);
+        const [issuesData, profileData] = await Promise.all([
+          fetchRecommendedIssues(),
+          getUserProfile()
+        ]);
+        
+        setIssuesList(issuesData);
+        
+        if (profileData) {
+          // Process contributions to find active issue
+          const activeContribution = profileData.contributions?.find((c: any) => c.status !== "merged");
+          const hasMerged = profileData.contributions?.some((c: any) => c.status === "merged");
+          const hasEnrolled = profileData.contributions && profileData.contributions.length > 0;
+          
+          setDbState({
+            points: profileData.points,
+            streak: profileData.streak,
+            prMerged: hasMerged,
+            activeIssueId: activeContribution?.issueId || null,
+            contributionStep: activeContribution ? parseInt(activeContribution.status) || 0 : 0,
+            issueEnrolled: hasEnrolled,
+            onboardingCompleted: true,
+            unlockedBadges: profileData.unlockedBadges || [],
+          });
+        }
       } catch (error) {
         console.error(error);
       } finally {
         setLoading(false);
       }
     }
-    loadIssues();
+    loadData();
   }, []);
 
-  const activeIssue = state.activeIssueId ? issuesList.find(i => i.id === state.activeIssueId) : null;
+  const activeIssue = dbState.activeIssueId ? issuesList.find(i => i.id === dbState.activeIssueId) : null;
 
   const handleWhyClick = (id: string) => {
     const issue = issuesList.find(i => i.id === id);
@@ -73,10 +105,10 @@ export default function Dashboard() {
       {/* Top Metrics */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: "Points", value: state.points, icon: Trophy, color: "text-amber-400" },
-          { label: "Contributions", value: state.prMerged ? 1 : 0, icon: GitMerge, color: "text-[var(--color-primary-accent)]" },
-          { label: "Community Rank", value: state.prMerged ? "#183" : "#247", icon: Trophy, color: "text-[var(--color-success)]" },
-          { label: "Day Streak", value: state.streak, icon: Flame, color: "text-orange-500" },
+          { label: "Points", value: dbState.points, icon: Trophy, color: "text-amber-400" },
+          { label: "Contributions", value: dbState.prMerged ? 1 : 0, icon: GitMerge, color: "text-[var(--color-primary-accent)]" },
+          { label: "Community Rank", value: dbState.prMerged ? "#183" : "#247", icon: Trophy, color: "text-[var(--color-success)]" },
+          { label: "Day Streak", value: dbState.streak, icon: Flame, color: "text-orange-500" },
         ].map((metric, i) => (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -110,8 +142,8 @@ export default function Dashboard() {
                 <CardContent>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-y-4 gap-x-2">
                     {getContributionProgress().map((step, idx) => {
-                      const isCompleted = idx < state.contributionStep;
-                      const isCurrent = idx === state.contributionStep;
+                      const isCompleted = idx < dbState.contributionStep;
+                      const isCurrent = idx === dbState.contributionStep;
                       return (
                         <div key={idx} className="flex items-center gap-2">
                           {isCompleted ? (
@@ -131,7 +163,7 @@ export default function Dashboard() {
                   <div className="mt-6">
                     <Button asChild className="w-full sm:w-auto group">
                       <Link href={`/contributions/${activeIssue.id}`}>
-                        {state.contributionStep > 0 ? "Continue contribution" : "Start contribution"}
+                        {dbState.contributionStep > 0 ? "Continue contribution" : "Start contribution"}
                         <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
                       </Link>
                     </Button>
@@ -179,7 +211,7 @@ export default function Dashboard() {
             <Card>
               <CardContent className="p-6">
                 <div className="relative border-l border-[var(--color-border)] ml-3 space-y-6">
-                  {state.prMerged && (
+                  {dbState.prMerged && (
                     <div className="relative pl-6">
                       <div className="absolute -left-1.5 top-1.5 w-3 h-3 bg-[var(--color-success)] rounded-full ring-4 ring-[var(--color-card-bg)]" />
                       <p className="text-sm font-medium">You merged your first pull request</p>
@@ -187,14 +219,14 @@ export default function Dashboard() {
                       <p className="text-xs text-[var(--color-muted-text)] mt-1">Just now</p>
                     </div>
                   )}
-                  {state.issueEnrolled && (
+                  {dbState.issueEnrolled && (
                     <div className="relative pl-6">
                       <div className="absolute -left-1.5 top-1.5 w-3 h-3 bg-[var(--color-primary-accent)] rounded-full ring-4 ring-[var(--color-card-bg)]" />
                       <p className="text-sm font-medium">You enrolled in an issue</p>
-                      <p className="text-xs text-[var(--color-muted-text)] mt-1">{state.prMerged ? "Earlier today" : "Today"}</p>
+                      <p className="text-xs text-[var(--color-muted-text)] mt-1">{dbState.prMerged ? "Earlier today" : "Today"}</p>
                     </div>
                   )}
-                  {state.onboardingCompleted && (
+                  {dbState.onboardingCompleted && (
                     <div className="relative pl-6">
                       <div className="absolute -left-1.5 top-1.5 w-3 h-3 bg-[var(--color-border)] rounded-full ring-4 ring-[var(--color-card-bg)]" />
                       <p className="text-sm font-medium">Profile created</p>
@@ -217,7 +249,7 @@ export default function Dashboard() {
             <Card>
               <CardContent className="p-6 grid grid-cols-4 gap-4">
                 {achievements.slice(0, 4).map(badge => {
-                  const isUnlocked = state.unlockedBadges.includes(badge.id);
+                  const isUnlocked = dbState.unlockedBadges.includes(badge.id);
                   return (
                     <div key={badge.id} className="flex flex-col items-center gap-2">
                       <div className={`w-12 h-12 rounded-full flex items-center justify-center border-2 transition-colors ${

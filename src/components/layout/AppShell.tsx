@@ -1,16 +1,26 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 import { 
   Search, Bell, Menu, X, LayoutDashboard, Compass, 
-  GitMerge, Trophy, Award, UserCircle, Code2, LogOut
+  GitMerge, Trophy, Award, UserCircle, Code2
 } from "lucide-react";
-import { useDemoStore } from "@/lib/store";
+import { getUserProfile } from "@/app/actions/user";
 import { useSession } from "next-auth/react";
 import { cn } from "@/lib/utils";
+
+interface Contribution {
+  status: string;
+  issueId: string;
+}
+
+interface UserProfile {
+  contributions?: Contribution[];
+  points?: number;
+}
 
 const navItems = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -24,9 +34,18 @@ const navItems = [
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { data: session } = useSession();
-  const { state } = useDemoStore();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
 
+  useEffect(() => {
+    if (session?.user?.id) {
+      getUserProfile().then(data => setProfile(data));
+    }
+  }, [session]);
+
+  const activeIssueId = profile?.contributions?.find((c: Contribution) => c.status !== "merged")?.issueId;
+  const points = profile?.points || 0;
+  
   // Don't render shell on landing or onboarding
   if (pathname === "/" || pathname.startsWith("/onboarding")) {
     return <>{children}</>;
@@ -72,11 +91,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <p className="px-3 text-xs font-semibold text-[var(--color-muted-text)] uppercase tracking-wider mb-2">Menu</p>
           {navItems.map((item) => {
             const isActive = pathname.startsWith(item.href) && 
-              (item.href !== "/contributions/current" || state.activeIssueId);
+              (item.href !== "/contributions/current" || activeIssueId);
             return (
               <Link 
                 key={item.name} 
-                href={item.href === "/contributions/current" && state.activeIssueId ? `/contributions/${state.activeIssueId}` : item.href}
+                href={item.href === "/contributions/current" && activeIssueId ? `/contributions/${activeIssueId}` : item.href}
                 className={cn(
                   "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors relative",
                   isActive 
@@ -96,7 +115,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <img src={session?.user?.image || "https://github.com/ghost.png"} alt={session?.user?.name || "User"} className="w-10 h-10 rounded-full border border-[var(--color-border)]" />
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-[var(--color-primary-text)] truncate">{session?.user?.name || "Contributor"}</p>
-              <p className="text-xs text-[var(--color-primary-accent)] font-medium">{state.points} points</p>
+              <p className="text-xs text-[var(--color-primary-accent)] font-medium">{points} points</p>
             </div>
           </Link>
         </div>

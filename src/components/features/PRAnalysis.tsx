@@ -5,11 +5,10 @@ import { Check, AlertTriangle, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 
 interface PRAnalysisProps {
-  onAnalyzeComplete?: () => void;
   onSubmit: () => void;
 }
 
-export function PRAnalysis({ onAnalyzeComplete, onSubmit }: PRAnalysisProps) {
+export function PRAnalysis({ onSubmit }: PRAnalysisProps) {
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex flex-col md:flex-row items-center md:items-start gap-8">

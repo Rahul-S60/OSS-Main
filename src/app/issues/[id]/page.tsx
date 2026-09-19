@@ -7,7 +7,7 @@ import { ArrowLeft, Check, CheckCircle2, AlertTriangle, ExternalLink } from "luc
 import Link from "next/link";
 import { Issue } from "@/data/issues";
 import { fetchRecommendedIssues } from "@/app/actions/github";
-import { useDemoStore } from "@/lib/store";
+import { enrollInIssue } from "@/app/actions/contributions";
 import { useToast } from "@/components/ui/Toast";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
@@ -16,7 +16,6 @@ import { Card, CardContent } from "@/components/ui/Card";
 export default function IssueDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const { updateState } = useDemoStore();
   const { addToast } = useToast();
   
   const [isEnrolling, setIsEnrolling] = useState(false);
@@ -44,23 +43,33 @@ export default function IssueDetailPage() {
   if (loading) return <div className="p-8 flex justify-center"><div className="w-8 h-8 rounded-full border-2 border-[var(--color-primary-accent)] border-t-transparent animate-spin" /></div>;
   if (!issue) return <div className="p-8">Issue not found</div>;
 
-  const handleEnroll = () => {
+  const handleEnroll = async () => {
     setIsEnrolling(true);
-    setTimeout(() => {
-      setIsEnrolling(false);
-      setEnrollmentSuccess(true);
-      updateState({ 
-        issueEnrolled: true, 
-        activeIssueId: issue.id,
-        contributionStep: 0,
+    try {
+      await enrollInIssue({
+        id: issue.id,
+        title: issue.title,
+        repository: issue.repository,
+        description: issue.description,
+        difficulty: issue.difficulty,
+        estimatedEffort: issue.estimatedEffort,
+        languages: issue.languages,
+        technologies: issue.technologies,
       });
+      
+      setEnrollmentSuccess(true);
       addToast({ title: "Issue enrolled", type: "success" });
       
       // Navigate to contribution workspace after celebration
       setTimeout(() => {
         router.push(`/contributions/${issue.id}`);
       }, 2000);
-    }, 1500);
+    } catch (error) {
+      console.error(error);
+      addToast({ title: "Failed to enroll", type: "error" });
+    } finally {
+      setIsEnrolling(false);
+    }
   };
 
   return (

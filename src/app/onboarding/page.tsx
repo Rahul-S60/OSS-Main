@@ -6,7 +6,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Check, ChevronRight, Code2, Layers, UserCircle2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { useSession } from "next-auth/react";
-import { useDemoStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
 
 const STEPS = ["Profile", "Skills", "Experience", "Ready"];
@@ -14,7 +13,6 @@ const STEPS = ["Profile", "Skills", "Experience", "Ready"];
 export default function OnboardingFlow() {
   const router = useRouter();
   const { data: session } = useSession();
-  const { updateState } = useDemoStore();
   const [currentStep, setCurrentStep] = useState(0);
   
   // State for Step 2
@@ -31,7 +29,6 @@ export default function OnboardingFlow() {
     if (currentStep < STEPS.length - 1) {
       setCurrentStep(prev => prev + 1);
     } else {
-      updateState({ onboardingCompleted: true });
       router.push("/dashboard");
     }
   };

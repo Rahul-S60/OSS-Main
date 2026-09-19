@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { issues } from "@/data/issues";
+import { Issue } from "@/data/issues";
+import { fetchRecommendedIssues } from "@/app/actions/github";
 import { useSession } from "next-auth/react";
 import { achievements } from "@/data/achievements";
 import { useDemoStore } from "@/lib/store";
@@ -11,20 +12,38 @@ import { IssueCard } from "@/components/features/IssueCard";
 import { RecommendationDrawer } from "@/components/features/RecommendationDrawer";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
-import { ArrowRight, CheckCircle2, CircleDashed, Circle, GitMerge, Trophy, Flame } from "lucide-react";
+import { ArrowRight, CheckCircle2, CircleDashed, Circle, GitMerge, Trophy, Flame, Loader2 } from "lucide-react";
 
 export default function Dashboard() {
   const { data: session } = useSession();
   const { state } = useDemoStore();
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [selectedIssueId, setSelectedIssueId] = useState<string | null>(null);
+  const [selectedIssue, setSelectedIssue] = useState<Issue | null>(null);
+  const [issuesList, setIssuesList] = useState<Issue[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const recommendedIssues = issues.slice(0, 3);
-  const activeIssue = state.activeIssueId ? issues.find(i => i.id === state.activeIssueId) : null;
+  useEffect(() => {
+    async function loadIssues() {
+      try {
+        const data = await fetchRecommendedIssues();
+        setIssuesList(data);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadIssues();
+  }, []);
+
+  const activeIssue = state.activeIssueId ? issuesList.find(i => i.id === state.activeIssueId) : null;
 
   const handleWhyClick = (id: string) => {
-    setSelectedIssueId(id);
-    setDrawerOpen(true);
+    const issue = issuesList.find(i => i.id === id);
+    if (issue) {
+      setSelectedIssue(issue);
+      setDrawerOpen(true);
+    }
   };
 
   const getContributionProgress = () => {
@@ -124,17 +143,32 @@ export default function Dashboard() {
 
           {/* Recommended Issues */}
           <section className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold">Recommended for you</h2>
-              <Link href="/explore" className="text-sm font-medium text-[var(--color-primary-accent)] hover:underline">
-                View all matches
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold tracking-tight">Recommended for you</h2>
+              <Link href="/explore" className="text-sm font-medium text-[var(--color-primary-accent)] hover:underline flex items-center">
+                View all <ArrowRight className="ml-1 w-4 h-4" />
               </Link>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {recommendedIssues.map(issue => (
-                <IssueCard key={issue.id} issue={issue} onWhyClick={handleWhyClick} />
-              ))}
-            </div>
+            
+            {loading ? (
+              <div className="flex flex-col items-center justify-center py-10 bg-[var(--color-card-bg)] rounded-xl border border-[var(--color-border)]">
+                <Loader2 className="w-8 h-8 animate-spin text-[var(--color-primary-accent)] mb-4" />
+                <p className="text-[var(--color-secondary-text)]">Finding the best issues for you...</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {issuesList.slice(0, 4).map((issue, idx) => (
+                  <motion.div
+                    key={issue.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: idx * 0.1 }}
+                  >
+                    <IssueCard issue={issue} onWhyClick={handleWhyClick} />
+                  </motion.div>
+                ))}
+              </div>
+            )}
           </section>
         </div>
 
@@ -209,7 +243,7 @@ export default function Dashboard() {
       <RecommendationDrawer 
         isOpen={drawerOpen} 
         onClose={() => setDrawerOpen(false)} 
-        issueId={selectedIssueId} 
+        issue={selectedIssue} 
       />
     </div>
   );

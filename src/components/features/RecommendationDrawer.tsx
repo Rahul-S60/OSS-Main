@@ -3,17 +3,16 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ExternalLink } from "lucide-react";
 import Link from "next/link";
-import { issues } from "@/data/issues";
+import { Issue } from "@/data/issues";
 import { Button } from "@/components/ui/Button";
 
 interface RecommendationDrawerProps {
   isOpen: boolean;
   onClose: () => void;
-  issueId: string | null;
+  issue: Issue | null;
 }
 
-export function RecommendationDrawer({ isOpen, onClose, issueId }: RecommendationDrawerProps) {
-  const issue = issueId ? issues.find(i => i.id === issueId) : null;
+export function RecommendationDrawer({ isOpen, onClose, issue }: RecommendationDrawerProps) {
 
   return (
     <AnimatePresence>
@@ -138,13 +137,21 @@ export function RecommendationDrawer({ isOpen, onClose, issueId }: Recommendatio
               </div>
             )}
 
-            <div className="p-6 border-t border-[var(--color-border)]">
+            <div className="p-6 border-t border-[var(--color-border)] flex flex-col gap-3">
               <Button size="lg" className="w-full group" asChild>
-                <Link href={`/issues/${issueId}`}>
+                <Link href={`/issues/${issue?.id}`}>
                   View full issue details
                   <ExternalLink className="w-4 h-4 ml-2 opacity-70 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
                 </Link>
               </Button>
+              {issue?.url && (
+                <Button variant="ghost" className="w-full group text-[var(--color-secondary-text)]" asChild>
+                  <Link href={issue.url} target="_blank" rel="noopener noreferrer">
+                    View on GitHub
+                    <ExternalLink className="w-4 h-4 ml-2 opacity-70 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+                  </Link>
+                </Button>
+              )}
             </div>
           </motion.div>
         </>

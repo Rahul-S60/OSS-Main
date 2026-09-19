@@ -7,7 +7,8 @@ import {
   CheckCircle2, Circle, Copy, Terminal, GitPullRequest as Github, 
   GitPullRequest, Play, Check, AlertTriangle
 } from "lucide-react";
-import { issues } from "@/data/issues";
+import { Issue } from "@/data/issues";
+import { fetchRecommendedIssues } from "@/app/actions/github";
 import { useDemoStore } from "@/lib/store";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
@@ -31,8 +32,25 @@ export default function ContributionWorkspace() {
   const { state, updateState } = useDemoStore();
   const { addToast } = useToast();
   
+  const [issue, setIssue] = useState<Issue | null>(null);
+  const [loading, setLoading] = useState(true);
+
   const issueId = params.id as string;
-  const issue = issues.find(i => i.id === issueId);
+  
+  useEffect(() => {
+    async function loadIssue() {
+      try {
+        const data = await fetchRecommendedIssues();
+        const found = data.find(i => i.id === issueId);
+        setIssue(found || null);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadIssue();
+  }, [issueId]);
   
   const currentStep = state.contributionStep;
   
@@ -41,6 +59,7 @@ export default function ContributionWorkspace() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [isSimulatingMerge, setIsSimulatingMerge] = useState(false);
 
+  if (loading) return <div className="p-8 flex justify-center"><div className="w-8 h-8 rounded-full border-2 border-[var(--color-primary-accent)] border-t-transparent animate-spin" /></div>;
   if (!issue) return <div className="p-8">Contribution not found</div>;
 
   const nextStep = () => {

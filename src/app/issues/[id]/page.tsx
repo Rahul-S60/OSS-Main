@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, Check, CheckCircle2, AlertTriangle, ExternalLink } from "lucide-react";
 import Link from "next/link";
-import { issues } from "@/data/issues";
+import { Issue } from "@/data/issues";
+import { fetchRecommendedIssues } from "@/app/actions/github";
 import { useDemoStore } from "@/lib/store";
 import { useToast } from "@/components/ui/Toast";
 import { Button } from "@/components/ui/Button";
@@ -20,10 +21,27 @@ export default function IssueDetailPage() {
   
   const [isEnrolling, setIsEnrolling] = useState(false);
   const [enrollmentSuccess, setEnrollmentSuccess] = useState(false);
+  const [issue, setIssue] = useState<Issue | null>(null);
+  const [loading, setLoading] = useState(true);
 
   const issueId = params.id as string;
-  const issue = issues.find(i => i.id === issueId);
 
+  useEffect(() => {
+    async function loadIssue() {
+      try {
+        const data = await fetchRecommendedIssues();
+        const found = data.find(i => i.id === issueId);
+        setIssue(found || null);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadIssue();
+  }, [issueId]);
+
+  if (loading) return <div className="p-8 flex justify-center"><div className="w-8 h-8 rounded-full border-2 border-[var(--color-primary-accent)] border-t-transparent animate-spin" /></div>;
   if (!issue) return <div className="p-8">Issue not found</div>;
 
   const handleEnroll = () => {
@@ -176,7 +194,17 @@ export default function IssueDetailPage() {
                       "Enroll in this issue"
                     )}
                   </Button>
-                  <Button variant="ghost" className="w-full">Save for later</Button>
+                  <div className="flex gap-2">
+                    <Button variant="ghost" className="flex-1">Save for later</Button>
+                    {issue.url && (
+                      <Button variant="outline" className="flex-1 group" asChild>
+                        <Link href={issue.url} target="_blank" rel="noopener noreferrer">
+                          View on GitHub
+                          <ExternalLink className="w-4 h-4 ml-2 opacity-70 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+                        </Link>
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </CardContent>
             </Card>

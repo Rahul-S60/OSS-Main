@@ -2,6 +2,7 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { GitMerge, Trophy } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
 
 interface SuccessOverlayProps {
@@ -11,6 +12,22 @@ interface SuccessOverlayProps {
 }
 
 export function SuccessOverlay({ isVisible, onContinue, pointsEarned }: SuccessOverlayProps) {
+  const [particles, setParticles] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (isVisible) {
+      setParticles(Array.from({ length: 12 }).map((_, i) => ({
+        id: i,
+        left: `${Math.random() * 100}%`,
+        scale: Math.random() * 0.5 + 0.5,
+        rotate: Math.random() * 360,
+        duration: Math.random() * 2 + 2,
+        delay: Math.random() * 0.5,
+        color: ['#6366f1', '#10b981', '#f59e0b', '#8b5cf6'][Math.floor(Math.random() * 4)]
+      })));
+    }
+  }, [isVisible]);
+
   return (
     <AnimatePresence>
       {isVisible && (
@@ -21,28 +38,28 @@ export function SuccessOverlay({ isVisible, onContinue, pointsEarned }: SuccessO
         >
           {/* Confetti / Particle background effect */}
           <div className="absolute inset-0 pointer-events-none opacity-30">
-             {Array.from({ length: 30 }).map((_, i) => (
+             {particles.map((p) => (
                 <motion.div
-                  key={i}
+                  key={p.id}
                   initial={{ 
                     top: "100%", 
-                    left: `${Math.random() * 100}%`,
+                    left: p.left,
                     opacity: 1,
-                    scale: Math.random() * 0.5 + 0.5
+                    scale: p.scale
                   }}
                   animate={{ 
                     top: "-10%",
                     opacity: 0,
-                    rotate: Math.random() * 360
+                    rotate: p.rotate
                   }}
                   transition={{ 
-                    duration: Math.random() * 2 + 2, 
+                    duration: p.duration, 
                     ease: "easeOut",
-                    delay: Math.random() * 0.5
+                    delay: p.delay
                   }}
-                  className="absolute w-3 h-3 rounded-full bg-[var(--color-primary-accent)]"
+                  className="absolute w-3 h-3 rounded-full"
                   style={{
-                    backgroundColor: ['#6366f1', '#10b981', '#f59e0b', '#8b5cf6'][Math.floor(Math.random() * 4)]
+                    backgroundColor: p.color
                   }}
                 />
              ))}

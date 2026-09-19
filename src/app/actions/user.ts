@@ -35,12 +35,6 @@ export async function getUserProfile() {
     });
   }
 
-  // Fetch the user's achievements
-  const achievements = await prisma.achievement.findMany({
-    where: { userId },
-    select: { badgeId: true },
-  });
-
   // Fetch the user's active/completed contributions
   const contributions = await prisma.contribution.findMany({
     where: { userId },
@@ -48,11 +42,44 @@ export async function getUserProfile() {
     orderBy: { updatedAt: 'desc' },
   });
 
+  // Calculate true points based on merged PRs (e.g., 1250 points per merged PR)
+  const mergedCount = contributions.filter(c => c.status === "merged").length;
+  const expectedPoints = mergedCount * 1250;
+  
+  // Auto-sync profile points if out of date
+  if (profile.points !== expectedPoints) {
+    profile = await prisma.userProfile.update({
+      where: { userId },
+      data: { points: expectedPoints }
+    });
+  }
+
+  // Fetch the user's achievements
+  let achievements = await prisma.achievement.findMany({
+    where: { userId },
+    select: { badgeId: true },
+  });
+
+  // Auto-award badges based on activity
+  const unlockedSet = new Set(achievements.map((a: { badgeId: string }) => a.badgeId));
+  const newBadges = [];
+  
+  if (contributions.length > 0 && !unlockedSet.has("first_issue")) newBadges.push("first_issue");
+  if (mergedCount > 0 && !unlockedSet.has("first_pr")) newBadges.push("first_pr");
+  if (mergedCount >= 3 && !unlockedSet.has("three_prs")) newBadges.push("three_prs");
+
+  if (newBadges.length > 0) {
+    await prisma.achievement.createMany({
+      data: newBadges.map(badgeId => ({ userId, badgeId }))
+    });
+    newBadges.forEach(b => unlockedSet.add(b));
+  }
+
   const result = {
     ...profile,
-    unlockedBadges: achievements.map((a) => a.badgeId),
+    unlockedBadges: Array.from(unlockedSet),
     contributions,
-    prMerged: contributions.some((c) => c.status === "merged"),
+    prMerged: mergedCount > 0,
     issueEnrolled: contributions.length > 0,
     onboardingCompleted: true,
   };

@@ -70,17 +70,17 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     },
     async session({ session, token }) {
       if (token) {
-        // @ts-ignore
+        // @ts-expect-error
         session.user.id = token.sub;
-        // @ts-ignore
+        // @ts-expect-error
         session.user.username = token.username;
-        // @ts-ignore
+        // @ts-expect-error
         session.user.followers = token.followers;
-        // @ts-ignore
+        // @ts-expect-error
         session.user.public_repos = token.public_repos;
-        // @ts-ignore
+        // @ts-expect-error
         session.user.location = token.location;
-        // @ts-ignore
+        // @ts-expect-error
         session.user.languages = token.languages || ["JavaScript", "TypeScript", "React"];
       }
       return session;

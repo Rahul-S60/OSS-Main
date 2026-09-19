@@ -22,8 +22,20 @@ export async function getTopUsers(limit = 50) {
     }
   });
 
+  type LeaderboardProfile = {
+    userId: string;
+    points: number;
+    streak: number;
+    github_username: string | null;
+    user: {
+      name: string | null;
+      image: string | null;
+      contributions: { id: string }[];
+    };
+  };
+
   // Map to a clean structure expected by the leaderboard
-  const result = profiles.map((p, index) => {
+  const result = profiles.map((p: LeaderboardProfile, index: number) => {
     const mergedCount = p.user.contributions.length;
 
     return {

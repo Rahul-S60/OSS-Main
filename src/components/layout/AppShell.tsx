@@ -112,6 +112,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
         <div className="p-4 border-t border-[var(--color-border)]/50 shrink-0">
           <Link href="/profile" className="flex items-center gap-3 p-2 rounded-lg hover:bg-[var(--color-elevated-surface)] transition-colors group">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={session?.user?.image || "https://github.com/ghost.png"} alt={session?.user?.name || "User"} className="w-10 h-10 rounded-full border border-[var(--color-border)]" />
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-[var(--color-primary-text)] truncate">{session?.user?.name || "Contributor"}</p>

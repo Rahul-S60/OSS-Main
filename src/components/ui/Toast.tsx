@@ -2,9 +2,9 @@
 
 import React, { createContext, useContext, useState, useCallback, ReactNode } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { CheckCircle2, XCircle, Info, X } from "lucide-react";
+import { CheckCircle2, XCircle, Info, AlertTriangle, X } from "lucide-react";
 
-type ToastType = "success" | "error" | "info";
+type ToastType = "success" | "error" | "info" | "warning";
 
 export interface Toast {
   id: string;
@@ -52,6 +52,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                 {toast.type === "success" && <CheckCircle2 className="h-5 w-5 text-[var(--color-success)]" />}
                 {toast.type === "error" && <XCircle className="h-5 w-5 text-[var(--color-danger)]" />}
                 {toast.type === "info" && <Info className="h-5 w-5 text-[var(--color-primary-accent)]" />}
+                {toast.type === "warning" && <AlertTriangle className="h-5 w-5 text-[var(--color-warning)]" />}
               </div>
               <div className="flex-1">
                 <p className="text-sm font-medium text-[var(--color-primary-text)]">{toast.title}</p>

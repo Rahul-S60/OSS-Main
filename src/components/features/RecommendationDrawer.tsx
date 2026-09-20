@@ -1,13 +1,14 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { X, ExternalLink } from "lucide-react";
+import { X, ExternalLink, Bookmark, BookmarkCheck } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { Issue } from "@/data/issues";
 import { Button } from "@/components/ui/Button";
 import { saveIssueForLater } from "@/app/actions/contributions";
 import { getUserProfile } from "@/app/actions/user";
+import { useToast } from "@/components/ui/Toast";
 
 // Helper for stable pseudo-random numbers
 const getHash = (str: string, min: number, max: number) => {
@@ -25,23 +26,72 @@ interface RecommendationDrawerProps {
 }
 
 export function RecommendationDrawer({ isOpen, onClose, issue }: RecommendationDrawerProps) {
+  const { addToast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
   const [profile, setProfile] = useState<any>(null);
 
   useEffect(() => {
-    if (isOpen && !profile) {
+    if (isOpen) {
       getUserProfile().then(p => setProfile(p));
     }
-  }, [isOpen, profile]);
+  }, [isOpen]);
+
+  const isAlreadySaved = Boolean(
+    profile?.contributions?.some(
+      (c: any) => c.issueId === issue?.id && c.status === "saved"
+    )
+  );
 
   const handleSaveForLater = async () => {
     if (!issue) return;
     setIsSaving(true);
     try {
-      await saveIssueForLater(issue as any);
-      onClose();
+      const res = await saveIssueForLater({
+        id: issue.id,
+        title: issue.title,
+        repository: issue.repository,
+        description: issue.description,
+        difficulty: issue.difficulty,
+        estimatedEffort: issue.estimatedEffort,
+        languages: issue.languages,
+        technologies: issue.technologies,
+        points: issue.points,
+      });
+
+      if (res && res.error) {
+        addToast({ title: "Sign In Required", description: res.error, type: "warning" });
+        return;
+      }
+
+      if (res && res.saved !== undefined) {
+        // Update local profile state
+        setProfile((prev: any) => {
+          if (!prev) return prev;
+          const current = prev.contributions || [];
+          if (res.saved) {
+            return {
+              ...prev,
+              contributions: [...current.filter((c: any) => c.issueId !== issue.id), { issueId: issue.id, status: "saved" }]
+            };
+          } else {
+            return {
+              ...prev,
+              contributions: current.filter((c: any) => c.issueId !== issue.id)
+            };
+          }
+        });
+
+        addToast({
+          title: res.saved ? "Saved for later" : "Removed from saved",
+          description: res.saved 
+            ? "Access this issue anytime under My Journey -> Saved." 
+            : "Issue removed from your saved list.",
+          type: "success"
+        });
+      }
     } catch (e) {
       console.error(e);
+      addToast({ title: "Failed to save issue", type: "error" });
     } finally {
       setIsSaving(false);
     }
@@ -182,12 +232,19 @@ export function RecommendationDrawer({ isOpen, onClose, issue }: RecommendationD
                 </Link>
               </Button>
               <Button 
-                variant="secondary" 
-                className="w-full"
+                variant={isAlreadySaved ? "outline" : "secondary"} 
+                className="w-full gap-2"
                 onClick={handleSaveForLater}
                 disabled={isSaving}
               >
-                {isSaving ? "Saving..." : "Save for later"}
+                {isSaving ? (
+                  <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                ) : isAlreadySaved ? (
+                  <BookmarkCheck className="w-4 h-4 text-[var(--color-primary-accent)]" />
+                ) : (
+                  <Bookmark className="w-4 h-4 text-[var(--color-secondary-text)]" />
+                )}
+                {isSaving ? "Saving..." : isAlreadySaved ? "Saved for later" : "Save for later"}
               </Button>
               {issue?.url && (
                 <Button variant="ghost" className="w-full group text-[var(--color-secondary-text)]" asChild>

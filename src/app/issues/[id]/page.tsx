@@ -3,11 +3,12 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Check, CheckCircle2, AlertTriangle, ExternalLink } from "lucide-react";
+import { ArrowLeft, Check, CheckCircle2, AlertTriangle, ExternalLink, Bookmark, BookmarkCheck } from "lucide-react";
 import Link from "next/link";
 import { Issue } from "@/data/issues";
 import { fetchRecommendedIssues } from "@/app/actions/github";
-import { enrollInIssue } from "@/app/actions/contributions";
+import { enrollInIssue, saveIssueForLater } from "@/app/actions/contributions";
+import { getUserProfile } from "@/app/actions/user";
 import { useToast } from "@/components/ui/Toast";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
@@ -20,24 +21,36 @@ export default function IssueDetailPage() {
   
   const [isEnrolling, setIsEnrolling] = useState(false);
   const [enrollmentSuccess, setEnrollmentSuccess] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
   const [issue, setIssue] = useState<Issue | null>(null);
   const [loading, setLoading] = useState(true);
 
   const issueId = params.id as string;
 
   useEffect(() => {
-    async function loadIssue() {
+    async function loadData() {
       try {
-        const data = await fetchRecommendedIssues();
+        const [data, profile] = await Promise.all([
+          fetchRecommendedIssues(),
+          getUserProfile()
+        ]);
         const found = data.find(i => i.id === issueId);
         setIssue(found || null);
+
+        if (profile?.contributions) {
+          const savedContribution = profile.contributions.some(
+            (c: any) => c.issueId === issueId && c.status === "saved"
+          );
+          setIsSaved(savedContribution);
+        }
       } catch (error) {
         console.error(error);
       } finally {
         setLoading(false);
       }
     }
-    loadIssue();
+    loadData();
   }, [issueId]);
 
   if (loading) return <div className="p-8 flex justify-center"><div className="w-8 h-8 rounded-full border-2 border-[var(--color-primary-accent)] border-t-transparent animate-spin" /></div>;
@@ -59,6 +72,7 @@ export default function IssueDetailPage() {
       });
       
       setEnrollmentSuccess(true);
+      setIsSaved(false);
       addToast({ title: "Issue enrolled", type: "success" });
       
       // Navigate to contribution workspace after celebration
@@ -70,6 +84,45 @@ export default function IssueDetailPage() {
       addToast({ title: "Failed to enroll", type: "error" });
     } finally {
       setIsEnrolling(false);
+    }
+  };
+
+  const handleSaveForLater = async () => {
+    if (!issue) return;
+    setIsSaving(true);
+    try {
+      const res = await saveIssueForLater({
+        id: issue.id,
+        title: issue.title,
+        repository: issue.repository,
+        description: issue.description,
+        difficulty: issue.difficulty,
+        estimatedEffort: issue.estimatedEffort,
+        languages: issue.languages,
+        technologies: issue.technologies,
+        points: issue.points,
+      });
+
+      if (res && res.error) {
+        addToast({ title: "Sign In Required", description: res.error, type: "warning" });
+        return;
+      }
+
+      if (res && res.saved !== undefined) {
+        setIsSaved(res.saved);
+        addToast({
+          title: res.saved ? "Saved for later" : "Removed from saved",
+          description: res.saved 
+            ? "Issue saved! Access it anytime in My Journey -> Saved." 
+            : "Issue removed from your saved list.",
+          type: "success"
+        });
+      }
+    } catch (error) {
+      console.error("Failed to save issue", error);
+      addToast({ title: "Failed to save", description: "An unexpected error occurred.", type: "error" });
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -205,7 +258,21 @@ export default function IssueDetailPage() {
                     )}
                   </Button>
                   <div className="flex gap-2">
-                    <Button variant="ghost" className="flex-1">Save for later</Button>
+                    <Button 
+                      variant={isSaved ? "secondary" : "ghost"} 
+                      className="flex-1 gap-1.5"
+                      onClick={handleSaveForLater}
+                      disabled={isSaving}
+                    >
+                      {isSaving ? (
+                        <div className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                      ) : isSaved ? (
+                        <BookmarkCheck className="w-4 h-4 text-[var(--color-primary-accent)]" />
+                      ) : (
+                        <Bookmark className="w-4 h-4 text-[var(--color-secondary-text)]" />
+                      )}
+                      {isSaving ? "Saving..." : isSaved ? "Saved" : "Save for later"}
+                    </Button>
                     {issue.url && (
                       <Button variant="outline" className="flex-1 group" asChild>
                         <Link href={issue.url} target="_blank" rel="noopener noreferrer">

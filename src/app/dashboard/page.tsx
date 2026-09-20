@@ -53,9 +53,9 @@ export default function Dashboard() {
           setIssuesList(relevantIssues);
           
           // Process contributions to find active issue
-          const activeContribution = profileData.contributions?.find((c: any) => c.status !== "merged");
+          const activeContribution = profileData.contributions?.find((c: any) => c.status !== "merged" && c.status !== "saved");
           const hasMerged = profileData.contributions?.some((c: any) => c.status === "merged");
-          const hasEnrolled = profileData.contributions && profileData.contributions.length > 0;
+          const hasEnrolled = profileData.contributions?.some((c: any) => c.status !== "saved");
           
           let userRank = 0;
           if (session?.user?.id) {

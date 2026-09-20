@@ -2,10 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Compass, Clock, CheckCircle, Bookmark, ArrowRight } from "lucide-react";
+import { Compass, Clock, CheckCircle, Bookmark, ArrowRight, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { getUserProfile } from "@/app/actions/user";
+import { removeSavedIssue } from "@/app/actions/contributions";
 import { Button } from "@/components/ui/Button";
+import { useToast } from "@/components/ui/Toast";
 
 type Contribution = {
   id: string;
@@ -21,6 +23,7 @@ type Contribution = {
 };
 
 export default function JourneyPage() {
+  const { addToast } = useToast();
   const [contributions, setContributions] = useState<Contribution[]>([]);
   const [activeTab, setActiveTab] = useState<"ongoing" | "saved" | "completed">("ongoing");
   const [loading, setLoading] = useState(true);
@@ -35,6 +38,27 @@ export default function JourneyPage() {
     }
     loadData();
   }, []);
+
+  const handleRemoveSaved = async (e: React.MouseEvent, issueId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    try {
+      const res = await removeSavedIssue(issueId);
+      if (res && 'error' in res && res.error) {
+        addToast({ title: "Error", description: res.error, type: "error" });
+        return;
+      }
+      setContributions(prev => prev.filter(c => c.issue.id !== issueId));
+      addToast({
+        title: "Removed from saved",
+        description: "Issue was removed from your saved list.",
+        type: "success"
+      });
+    } catch (err) {
+      console.error(err);
+      addToast({ title: "Failed to remove", description: "Could not remove saved issue.", type: "error" });
+    }
+  };
 
   const filteredContributions = contributions.filter(c => {
     if (activeTab === "saved") return c.status === "saved";
@@ -110,7 +134,7 @@ export default function JourneyPage() {
             {filteredContributions.length > 0 ? (
               filteredContributions.map(contribution => (
                 <Link 
-                  href={`/contributions/${contribution.issue.id}`} 
+                  href={contribution.status === "saved" ? `/issues/${contribution.issue.id}` : `/contributions/${contribution.issue.id}`} 
                   key={contribution.id}
                   className="group block p-6 rounded-xl bg-[var(--color-card-bg)] border border-[var(--color-border)] hover:border-[var(--color-primary-accent)]/50 transition-colors shadow-sm"
                 >
@@ -118,15 +142,27 @@ export default function JourneyPage() {
                     <span className="text-xs font-semibold px-2 py-1 rounded bg-[var(--color-elevated-surface)] text-[var(--color-muted-text)]">
                       {contribution.issue.repository}
                     </span>
-                    <span className={`text-xs font-semibold px-2 py-1 rounded-full ${
-                      contribution.status === "merged" 
-                        ? "bg-[var(--color-success)]/10 text-[var(--color-success)]" 
-                        : contribution.status === "saved"
-                        ? "bg-blue-500/10 text-blue-500"
-                        : "bg-[var(--color-primary-accent)]/10 text-[var(--color-primary-accent)]"
-                    }`}>
-                      {getStatusLabel(contribution.status)}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className={`text-xs font-semibold px-2 py-1 rounded-full ${
+                        contribution.status === "merged" 
+                          ? "bg-[var(--color-success)]/10 text-[var(--color-success)]" 
+                          : contribution.status === "saved"
+                          ? "bg-blue-500/10 text-blue-500"
+                          : "bg-[var(--color-primary-accent)]/10 text-[var(--color-primary-accent)]"
+                      }`}>
+                        {getStatusLabel(contribution.status)}
+                      </span>
+                      {activeTab === "saved" && (
+                        <button
+                          onClick={(e) => handleRemoveSaved(e, contribution.issue.id)}
+                          className="p-1 rounded hover:bg-red-500/10 text-[var(--color-muted-text)] hover:text-red-500 transition-colors"
+                          title="Remove from saved"
+                          aria-label="Remove from saved"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
                   </div>
                   
                   <h3 className="text-lg font-semibold mb-2 group-hover:text-[var(--color-primary-accent)] transition-colors">
@@ -138,7 +174,7 @@ export default function JourneyPage() {
                       Last updated {new Date(contribution.updatedAt).toLocaleDateString()}
                     </span>
                     <div className="text-[var(--color-primary-accent)] opacity-0 group-hover:opacity-100 transition-opacity flex items-center text-sm font-medium">
-                      {activeTab === "completed" ? "View Details" : "Resume"} <ArrowRight className="w-4 h-4 ml-1" />
+                      {activeTab === "completed" ? "View Details" : activeTab === "saved" ? "Start Contribution" : "Resume"} <ArrowRight className="w-4 h-4 ml-1" />
                     </div>
                   </div>
                 </Link>

@@ -45,3 +45,11 @@ next-env.d.ts
 *cookies.txt
 scratch.js
 *.zip
+
+# latex intermediate build files
+*.aux
+*.bbl
+*.blg
+*.log
+*.out
+*.synctex.gz

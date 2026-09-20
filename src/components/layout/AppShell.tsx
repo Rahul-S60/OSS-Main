@@ -46,6 +46,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const activeIssueId = profile?.contributions?.find((c: Contribution) => c.status !== "merged")?.issueId;
   const points = profile?.points || 0;
   
+  const handleLogout = async () => {
+    try {
+      await signOut({ redirect: false });
+    } catch (e) {
+      console.error(e);
+    }
+    window.location.href = "/";
+  };
+
   // Don't render shell on landing or onboarding
   if (pathname === "/" || pathname.startsWith("/onboarding")) {
     return <>{children}</>;
@@ -119,7 +128,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </div>
           </Link>
           <button 
-            onClick={() => signOut({ callbackUrl: "/" })}
+            onClick={handleLogout}
             className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-red-500 hover:bg-red-500/10 transition-colors w-full"
           >
             <LogOut className="w-5 h-5" />
@@ -190,7 +199,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </div>
             <div className="p-4 border-t border-[var(--color-border)] shrink-0">
               <button 
-                onClick={() => signOut({ callbackUrl: "/" })}
+                onClick={handleLogout}
                 className="flex items-center gap-3 px-3 py-3 w-full rounded-lg text-sm font-medium text-red-500 hover:bg-red-500/10 transition-colors"
               >
                 <LogOut className="w-5 h-5" />

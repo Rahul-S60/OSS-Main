@@ -1,19 +1,60 @@
-version: '3.8'
-
 services:
-  db:
+  postgres:
     image: postgres:15-alpine
-    container_name: opensource-companion-db
-    restart: always
+    container_name: opensource_companion_postgres
+    restart: unless-stopped
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgrespassword
-      POSTGRES_DB: opensource_companion
-    ports:
-      - "5432:5432"
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgrespassword}
+      POSTGRES_DB: ${POSTGRES_DB:-opensource_companion}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-opensource_companion}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    networks:
+      - app_network
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: opensource_companion_app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgrespassword}@postgres:5432/${POSTGRES_DB:-opensource_companion}?schema=public
+      - AUTH_SECRET=${AUTH_SECRET}
+      - AUTH_GITHUB_ID=${AUTH_GITHUB_ID:-${GITHUB_ID}}
+      - AUTH_GITHUB_SECRET=${AUTH_GITHUB_SECRET:-${GITHUB_SECRET}}
+      - GITHUB_ID=${GITHUB_ID:-${AUTH_GITHUB_ID}}
+      - GITHUB_SECRET=${GITHUB_SECRET:-${AUTH_GITHUB_SECRET}}
+      - AUTH_URL=${AUTH_URL:-http://localhost:3000}
+      - NEXTAUTH_URL=${NEXTAUTH_URL:-http://localhost:3000}
+      - AUTH_TRUST_HOST=true
+      - GITHUB_TOKEN=${GITHUB_TOKEN:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3000/api/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    networks:
+      - app_network
 
 volumes:
   postgres_data:
+    name: opensource_companion_postgres_data
+
+networks:
+  app_network:
+    name: opensource_companion_network
+    driver: bridge

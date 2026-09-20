@@ -6,10 +6,11 @@ import { prisma } from "@/lib/prisma";
 export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: PrismaAdapter(prisma),
   session: { strategy: "jwt", maxAge: 3600 }, // 1 hour session limit
+  trustHost: true,
   providers: [
     GitHub({
-      clientId: process.env.GITHUB_ID,
-      clientSecret: process.env.GITHUB_SECRET,
+      clientId: process.env.AUTH_GITHUB_ID || process.env.GITHUB_ID,
+      clientSecret: process.env.AUTH_GITHUB_SECRET || process.env.GITHUB_SECRET,
       authorization: {
         params: {
           scope: "read:user user:email repo",

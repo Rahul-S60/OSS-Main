@@ -5,9 +5,20 @@ import { Issue, IssueDifficulty } from "@/data/issues";
 export async function fetchRecommendedIssues(): Promise<Issue[]> {
   try {
     // Fetch real open issues labeled "help wanted" to get a broad mix
+    const headers: Record<string, string> = {
+      Accept: "application/vnd.github.v3+json",
+      "User-Agent": "OpenSource-Companion",
+    };
+    if (process.env.GITHUB_TOKEN) {
+      headers["Authorization"] = `Bearer ${process.env.GITHUB_TOKEN}`;
+    }
+
     const response = await fetch(
       'https://api.github.com/search/issues?q=is:issue+is:open+label:"help wanted"&sort=updated&order=desc&per_page=30',
-      { next: { revalidate: 3600 } } // Cache for 1 hour to avoid rate limits
+      {
+        headers,
+        next: { revalidate: 3600 },
+      }
     );
 
     if (!response.ok) {

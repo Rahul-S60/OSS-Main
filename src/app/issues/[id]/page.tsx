@@ -112,7 +112,7 @@ export default function IssueDetailPage() {
               <h2 className="text-xl font-semibold border-b border-[var(--color-border)] pb-2">Why this matches you</h2>
               <div className="p-4 rounded-xl bg-[var(--color-primary-accent)]/10 border border-[var(--color-primary-accent)]/20 text-sm">
                 <p className="text-[var(--color-primary-text)] mb-3">{issue.reason}</p>
-                <div className="flex gap-4">
+                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
                   <div className="flex-1">
                     <div className="flex justify-between text-xs text-[var(--color-secondary-text)] mb-1">
                       <span>Skill alignment</span>

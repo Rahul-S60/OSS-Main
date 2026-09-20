@@ -144,32 +144,32 @@ export default function ProfilePage() {
       {/* Header Profile Section */}
       <div className="bg-[var(--color-card-bg)] border border-[var(--color-border)] rounded-2xl overflow-hidden shadow-sm">
         <div className="h-32 bg-gradient-to-r from-[var(--color-primary-accent)] to-purple-600 opacity-80" />
-        <div className="px-8 pb-8 relative">
-          <div className="flex flex-col md:flex-row gap-6 items-start md:items-end -mt-12 mb-6">
-            <div className="w-24 h-24 rounded-full border-4 border-[var(--color-card-bg)] overflow-hidden bg-[var(--color-background)] shrink-0">
+        <div className="px-4 sm:px-8 pb-6 sm:pb-8 relative">
+          <div className="flex flex-col md:flex-row gap-4 sm:gap-6 items-start md:items-end -mt-12 mb-6">
+            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full border-4 border-[var(--color-card-bg)] overflow-hidden bg-[var(--color-background)] shrink-0 shadow-md">
               <img src={session?.user?.image || "https://github.com/ghost.png"} alt={session?.user?.name || "User"} className="w-full h-full object-cover" />
             </div>
-            <div className="flex-1">
-              <div className="flex items-center gap-3">
-                <h1 className="text-2xl font-bold text-[var(--color-primary-text)]">{session?.user?.name || 'Contributor'}</h1>
+            <div className="flex-1 min-w-0">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                <h1 className="text-xl sm:text-2xl font-bold text-[var(--color-primary-text)] truncate">{session?.user?.name || 'Contributor'}</h1>
                 {profile?.experienceLevel && (
                   <Badge variant="secondary" className="uppercase text-[10px] tracking-wider">{profile.experienceLevel}</Badge>
                 )}
               </div>
-              <p className="text-[var(--color-secondary-text)]">@{(session?.user as any)?.username || 'user'}</p>
+              <p className="text-xs sm:text-sm text-[var(--color-secondary-text)]">@{(session?.user as any)?.username || 'user'}</p>
             </div>
-            <div className="w-full md:w-auto flex gap-3 mt-4 md:mt-0">
-              <Button onClick={() => setIsEditing(true)} variant="secondary" className="w-full md:w-auto">
+            <div className="w-full md:w-auto flex gap-2 sm:gap-3 mt-2 sm:mt-4 md:mt-0">
+              <Button onClick={() => setIsEditing(true)} variant="secondary" className="flex-1 md:flex-none">
                 Edit Profile
               </Button>
-              <Button onClick={handleShare} className="w-full md:w-auto gap-2">
+              <Button onClick={handleShare} className="flex-1 md:flex-none gap-2">
                 {isSharing ? <Copy className="w-4 h-4" /> : <Share2 className="w-4 h-4" />}
                 Share
               </Button>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
             <div className="space-y-4">
               <p className="text-[var(--color-primary-text)] font-medium">Open Source Contributor</p>
               {profile?.bio && (
@@ -185,7 +185,7 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            <div className="md:col-span-2 grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className="md:col-span-2 grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
               {[
                 { label: "Points", value: profile?.points || 0, icon: Trophy, color: "text-amber-400" },
                 { label: "Merged PRs", value: profile?.prMerged ? 1 : 0, icon: GitMerge, color: "text-[var(--color-primary-accent)]" },

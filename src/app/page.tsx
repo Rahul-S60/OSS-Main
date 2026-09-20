@@ -278,19 +278,19 @@ export default function LandingPage() {
 
       {/* Navigation Bar */}
       <header className="sticky top-0 z-40 border-b border-[var(--color-border)]/60 bg-[var(--color-background)]/85 backdrop-blur-md">
-        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-3 group">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--color-primary-accent)] to-purple-600 flex items-center justify-center shadow-lg shadow-[var(--color-primary-accent)]/20 group-hover:scale-105 transition-transform">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-20 flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-2.5 sm:gap-3 group min-w-0">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-[var(--color-primary-accent)] to-purple-600 flex items-center justify-center shadow-lg shadow-[var(--color-primary-accent)]/20 group-hover:scale-105 transition-transform shrink-0">
               <Code2 className="w-5 h-5 text-white" />
             </div>
-            <div className="flex flex-col">
-              <span className="font-bold text-lg tracking-tight flex items-center gap-2">
+            <div className="flex flex-col min-w-0">
+              <span className="font-bold text-base sm:text-lg tracking-tight flex items-center gap-2 truncate">
                 OpenSource Companion
-                <span className="hidden sm:inline-block px-2 py-0.5 text-[10px] font-semibold tracking-wider uppercase rounded-full bg-[var(--color-primary-accent)]/15 text-[var(--color-primary-accent)] border border-[var(--color-primary-accent)]/30">
+                <span className="hidden md:inline-block px-2 py-0.5 text-[10px] font-semibold tracking-wider uppercase rounded-full bg-[var(--color-primary-accent)]/15 text-[var(--color-primary-accent)] border border-[var(--color-primary-accent)]/30">
                   v1.0
                 </span>
               </span>
-              <span className="text-[11px] text-[var(--color-muted-text)] font-mono">
+              <span className="hidden sm:inline-block text-[11px] text-[var(--color-muted-text)] font-mono truncate">
                 Intelligent OSS Onboarding Platform
               </span>
             </div>
@@ -320,11 +320,11 @@ export default function LandingPage() {
           </nav>
 
           {/* Action buttons */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
             {/* Theme Switcher */}
             <button
               onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              className="p-2.5 rounded-lg border border-[var(--color-border)] text-[var(--color-secondary-text)] hover:text-[var(--color-primary-text)] hover:bg-[var(--color-elevated-surface)] transition-colors"
+              className="p-2 sm:p-2.5 rounded-lg border border-[var(--color-border)] text-[var(--color-secondary-text)] hover:text-[var(--color-primary-text)] hover:bg-[var(--color-elevated-surface)] transition-colors min-w-[36px] min-h-[36px] flex items-center justify-center"
               aria-label="Toggle Theme"
             >
               {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
@@ -335,18 +335,18 @@ export default function LandingPage() {
                 variant="default"
                 size="sm"
                 onClick={() => router.push("/dashboard")}
-                className="gap-2 shadow-md shadow-[var(--color-primary-accent)]/20"
+                className="hidden sm:inline-flex gap-2 shadow-md shadow-[var(--color-primary-accent)]/20"
               >
                 Dashboard <ArrowRight className="w-4 h-4" />
               </Button>
             ) : (
-              <div className="flex items-center gap-2">
+              <div className="hidden sm:flex items-center gap-2">
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={handleStart}
                   disabled={isConnecting || isLoading}
-                  className="hidden sm:flex gap-2"
+                  className="hidden lg:flex gap-2"
                 >
                   <GithubIcon className="w-4 h-4" />
                   Sign In
@@ -366,7 +366,8 @@ export default function LandingPage() {
             {/* Mobile menu button */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-2 rounded-lg border border-[var(--color-border)] text-[var(--color-secondary-text)]"
+              className="md:hidden p-2 rounded-lg border border-[var(--color-border)] text-[var(--color-secondary-text)] hover:text-[var(--color-primary-text)] hover:bg-[var(--color-elevated-surface)] transition-colors min-w-[36px] min-h-[36px] flex items-center justify-center"
+              aria-label="Open mobile menu"
             >
               {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
@@ -380,40 +381,67 @@ export default function LandingPage() {
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: "auto", opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
-              className="md:hidden border-t border-[var(--color-border)] bg-[var(--color-card-bg)] px-6 py-4 flex flex-col gap-3"
+              className="md:hidden border-t border-[var(--color-border)] bg-[var(--color-card-bg)] px-5 py-4 flex flex-col gap-2.5 shadow-xl"
             >
+              {session ? (
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    router.push("/dashboard");
+                  }}
+                  className="w-full justify-center gap-2 mb-2"
+                >
+                  Go to Dashboard <ArrowRight className="w-4 h-4" />
+                </Button>
+              ) : (
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    handleStart();
+                  }}
+                  disabled={isConnecting || isLoading}
+                  className="w-full justify-center gap-2 mb-2 shadow-md shadow-[var(--color-primary-accent)]/20"
+                >
+                  <GithubIcon className="w-4 h-4" />
+                  Get Started with GitHub
+                </Button>
+              )}
               <Link
                 href="/explore"
                 onClick={() => setMobileMenuOpen(false)}
-                className="text-sm py-1.5 text-[var(--color-primary-accent)] font-semibold flex items-center gap-1"
+                className="text-sm py-2 px-3 rounded-lg bg-[var(--color-primary-accent)]/10 text-[var(--color-primary-accent)] font-semibold flex items-center justify-between"
               >
-                Explore Live Issues <ArrowRight className="w-3.5 h-3.5" />
+                <span>Explore Live Issues</span>
+                <ArrowRight className="w-4 h-4" />
               </Link>
               <a
                 href="#workflow"
                 onClick={() => setMobileMenuOpen(false)}
-                className="text-sm py-1.5 text-[var(--color-secondary-text)] hover:text-[var(--color-primary-text)]"
+                className="text-sm py-2 px-3 rounded-lg text-[var(--color-secondary-text)] hover:text-[var(--color-primary-text)] hover:bg-[var(--color-elevated-surface)] transition-colors"
               >
                 How It Works
               </a>
               <a
                 href="#algorithm"
                 onClick={() => setMobileMenuOpen(false)}
-                className="text-sm py-1.5 text-[var(--color-secondary-text)] hover:text-[var(--color-primary-text)]"
+                className="text-sm py-2 px-3 rounded-lg text-[var(--color-secondary-text)] hover:text-[var(--color-primary-text)] hover:bg-[var(--color-elevated-surface)] transition-colors"
               >
                 Matching Engine
               </a>
               <a
                 href="#architecture"
                 onClick={() => setMobileMenuOpen(false)}
-                className="text-sm py-1.5 text-[var(--color-secondary-text)] hover:text-[var(--color-primary-text)]"
+                className="text-sm py-2 px-3 rounded-lg text-[var(--color-secondary-text)] hover:text-[var(--color-primary-text)] hover:bg-[var(--color-elevated-surface)] transition-colors"
               >
                 Architecture
               </a>
               <a
                 href="#faq"
                 onClick={() => setMobileMenuOpen(false)}
-                className="text-sm py-1.5 text-[var(--color-secondary-text)] hover:text-[var(--color-primary-text)]"
+                className="text-sm py-2 px-3 rounded-lg text-[var(--color-secondary-text)] hover:text-[var(--color-primary-text)] hover:bg-[var(--color-elevated-surface)] transition-colors"
               >
                 FAQ
               </a>
@@ -530,23 +558,23 @@ export default function LandingPage() {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.4 }}
-            className="w-full max-w-5xl grid grid-cols-2 md:grid-cols-4 gap-4 p-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-card-bg)]/80 backdrop-blur-sm shadow-sm"
+            className="w-full max-w-5xl grid grid-cols-2 md:grid-cols-4 gap-0 p-2 sm:p-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-card-bg)]/80 backdrop-blur-sm shadow-sm"
           >
-            <div className="flex flex-col items-center p-3">
-              <span className="text-2xl sm:text-3xl font-extrabold text-[var(--color-primary-text)]">10,000+</span>
-              <span className="text-xs text-[var(--color-secondary-text)] font-medium mt-0.5">Issues Triaged</span>
+            <div className="flex flex-col items-center p-3 sm:p-4">
+              <span className="text-xl sm:text-3xl font-extrabold text-[var(--color-primary-text)]">10,000+</span>
+              <span className="text-[11px] sm:text-xs text-[var(--color-secondary-text)] font-medium mt-0.5">Issues Triaged</span>
             </div>
-            <div className="flex flex-col items-center p-3 border-l-0 md:border-l border-[var(--color-border)]">
-              <span className="text-2xl sm:text-3xl font-extrabold text-[var(--color-primary-accent)]">6 Stages</span>
-              <span className="text-xs text-[var(--color-secondary-text)] font-medium mt-0.5">Guided Workflow</span>
+            <div className="flex flex-col items-center p-3 sm:p-4 border-l border-[var(--color-border)]">
+              <span className="text-xl sm:text-3xl font-extrabold text-[var(--color-primary-accent)]">6 Stages</span>
+              <span className="text-[11px] sm:text-xs text-[var(--color-secondary-text)] font-medium mt-0.5">Guided Workflow</span>
             </div>
-            <div className="flex flex-col items-center p-3 border-l border-[var(--color-border)]">
-              <span className="text-2xl sm:text-3xl font-extrabold text-emerald-400">4 Factors</span>
-              <span className="text-xs text-[var(--color-secondary-text)] font-medium mt-0.5">Transparent Matching</span>
+            <div className="flex flex-col items-center p-3 sm:p-4 border-t md:border-t-0 md:border-l border-[var(--color-border)]">
+              <span className="text-xl sm:text-3xl font-extrabold text-emerald-400">4 Factors</span>
+              <span className="text-[11px] sm:text-xs text-[var(--color-secondary-text)] font-medium mt-0.5">Transparent Matching</span>
             </div>
-            <div className="flex flex-col items-center p-3 border-l border-[var(--color-border)]">
-              <span className="text-2xl sm:text-3xl font-extrabold text-purple-400">100%</span>
-              <span className="text-xs text-[var(--color-secondary-text)] font-medium mt-0.5">Interpretable Logic</span>
+            <div className="flex flex-col items-center p-3 sm:p-4 border-t md:border-t-0 border-l border-[var(--color-border)]">
+              <span className="text-xl sm:text-3xl font-extrabold text-purple-400">100%</span>
+              <span className="text-[11px] sm:text-xs text-[var(--color-secondary-text)] font-medium mt-0.5">Interpretable Logic</span>
             </div>
           </motion.div>
 
@@ -849,26 +877,26 @@ export default function LandingPage() {
           </div>
 
           {/* Interactive Step Navigator */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-10">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3 mb-10">
             {WORKFLOW_STEPS.map((s, idx) => {
               const isActive = activeWorkflowIndex === idx;
               return (
                 <button
                   key={s.step}
                   onClick={() => setActiveWorkflowIndex(idx)}
-                  className={`p-4 rounded-xl border text-left transition-all relative ${
+                  className={`p-3 sm:p-4 rounded-xl border text-left transition-all relative ${
                     isActive
-                      ? "border-[var(--color-primary-accent)] bg-[var(--color-primary-accent)]/10 shadow-md"
+                      ? "border-[var(--color-primary-accent)] bg-[var(--color-primary-accent)]/10 shadow-md ring-1 ring-[var(--color-primary-accent)]/30"
                       : "border-[var(--color-border)] bg-[var(--color-card-bg)] hover:bg-[var(--color-elevated-surface)]"
                   }`}
                 >
-                  <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center justify-between mb-1.5">
                     <span className={`text-xs font-mono font-bold ${isActive ? "text-[var(--color-primary-accent)]" : "text-[var(--color-muted-text)]"}`}>
                       {s.step}
                     </span>
                     {isActive && <div className="w-2 h-2 rounded-full bg-[var(--color-primary-accent)]" />}
                   </div>
-                  <p className="font-semibold text-sm tracking-tight">{s.short}</p>
+                  <p className="font-semibold text-xs sm:text-sm tracking-tight truncate">{s.short}</p>
                 </button>
               );
             })}
@@ -982,12 +1010,22 @@ export default function LandingPage() {
           </div>
 
           {/* Scoring Model Banner */}
-          <div className="max-w-4xl mx-auto p-6 sm:p-8 rounded-2xl border border-[var(--color-border)] bg-[var(--color-card-bg)] shadow-md mb-12 text-center">
+          <div className="max-w-4xl mx-auto p-5 sm:p-8 rounded-2xl border border-[var(--color-border)] bg-[var(--color-card-bg)] shadow-md mb-12 text-center">
             <p className="text-xs font-mono uppercase tracking-widest text-[var(--color-muted-text)] mb-3">
               COMPOSITE MATCH SCORE CALCULATION
             </p>
-            <div className="font-mono text-base sm:text-xl md:text-2xl text-[var(--color-primary-text)] font-semibold p-4 rounded-xl bg-[var(--color-secondary-bg)] border border-[var(--color-border)] overflow-x-auto whitespace-nowrap mb-4">
-              Match Score = 25% Skill Fit + 25% Difficulty Alignment + 25% Repo Health + 25% Semantic Relevance
+            <div className="p-3.5 sm:p-5 rounded-xl bg-[var(--color-secondary-bg)] border border-[var(--color-border)] mb-4">
+              <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 font-mono text-xs sm:text-base md:text-lg font-semibold leading-relaxed">
+                <span className="text-[var(--color-primary-accent)] font-bold">Match Score</span>
+                <span className="text-[var(--color-muted-text)]">=</span>
+                <span className="px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 whitespace-nowrap">25% Skill Fit</span>
+                <span className="text-[var(--color-muted-text)]">+</span>
+                <span className="px-2 py-0.5 rounded bg-purple-500/10 text-purple-400 border border-purple-500/20 whitespace-nowrap">25% Difficulty</span>
+                <span className="text-[var(--color-muted-text)]">+</span>
+                <span className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 whitespace-nowrap">25% Repo Health</span>
+                <span className="text-[var(--color-muted-text)]">+</span>
+                <span className="px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 whitespace-nowrap">25% Relevance</span>
+              </div>
             </div>
             <p className="text-xs text-[var(--color-secondary-text)]">
               Produces a normalized 0–100% compatibility rating tailored to your active development profile.
@@ -1637,7 +1675,7 @@ export default function LandingPage() {
 
               <div className="flex-1 overflow-y-auto p-6 space-y-6 text-sm">
                 {/* Circular score */}
-                <div className="flex items-center gap-6 p-4 rounded-xl bg-[var(--color-elevated-surface)] border border-[var(--color-border)]/50">
+                <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6 p-4 rounded-xl bg-[var(--color-elevated-surface)] border border-[var(--color-border)]/50 text-center sm:text-left">
                   <div className="relative w-20 h-20 flex items-center justify-center shrink-0">
                     <svg className="w-full h-full transform -rotate-90">
                       <circle cx="40" cy="40" r="34" stroke="var(--color-border)" strokeWidth="6" fill="none" />

@@ -33,14 +33,14 @@ export default function LeaderboardPage() {
         </p>
       </div>
 
-      <div className="flex border-b border-[var(--color-border)] mb-8">
+      <div className="flex border-b border-[var(--color-border)] overflow-x-auto mb-8">
         {["This week", "This month", "All time"].map(tab => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`px-6 py-3 font-medium text-sm transition-colors border-b-2 ${
+            className={`px-4 sm:px-6 py-3 font-medium text-sm transition-colors border-b-2 whitespace-nowrap shrink-0 ${
               activeTab === tab 
-                ? "border-[var(--color-primary-accent)] text-[var(--color-primary-text)]" 
+                ? "border-[var(--color-primary-accent)] text-[var(--color-primary-text)] font-semibold" 
                 : "border-transparent text-[var(--color-secondary-text)] hover:text-[var(--color-primary-text)]"
             }`}
           >

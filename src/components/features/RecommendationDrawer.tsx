@@ -76,10 +76,10 @@ export function RecommendationDrawer({ isOpen, onClose, issue }: RecommendationD
             </div>
 
             {issue ? (
-              <div className="flex-1 overflow-y-auto p-6 space-y-8">
+              <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 sm:space-y-8">
                 {/* Match Score */}
-                <div className="flex items-center gap-6">
-                  <div className="relative w-24 h-24 flex items-center justify-center">
+                <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
+                  <div className="relative w-24 h-24 flex items-center justify-center shrink-0">
                     <svg className="w-full h-full transform -rotate-90">
                       <circle cx="48" cy="48" r="44" stroke="var(--color-border)" strokeWidth="8" fill="none" />
                       <motion.circle 
@@ -101,14 +101,14 @@ export function RecommendationDrawer({ isOpen, onClose, issue }: RecommendationD
                     </div>
                   </div>
                   
-                  <div className="flex-1 space-y-3">
+                  <div className="flex-1 w-full space-y-2.5 sm:space-y-3">
                     {[
                       { label: "Skill alignment", value: getHash(issue.id + "skill", 75, 99) },
                       { label: "Difficulty fit", value: getHash(issue.id + "diff", 70, 98) },
                       { label: "Repository activity", value: getHash(issue.id + "repo", 60, 99) },
                       { label: "Semantic similarity", value: getHash(issue.id + "semantic", 80, 96) },
                     ].map(item => (
-                      <div key={item.label} className="flex items-center justify-between text-sm">
+                      <div key={item.label} className="flex items-center justify-between text-xs sm:text-sm">
                         <span className="text-[var(--color-secondary-text)]">{item.label}</span>
                         <span className="font-medium text-[var(--color-primary-text)]">{item.value}%</span>
                       </div>

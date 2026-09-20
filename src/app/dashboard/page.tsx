@@ -127,7 +127,7 @@ export default function Dashboard() {
       </div>
 
       {/* Top Metrics */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {[
           { label: "Points", value: dbState.points, icon: Trophy, color: "text-amber-400" },
           { label: "Contributions", value: dbState.prMerged ? 1 : 0, icon: GitMerge, color: "text-[var(--color-primary-accent)]" },
@@ -139,18 +139,18 @@ export default function Dashboard() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.1 }}
             key={metric.label}
-            className="p-5 rounded-2xl border border-[var(--color-border)] bg-[var(--color-card-bg)]"
+            className="p-4 sm:p-5 rounded-2xl border border-[var(--color-border)] bg-[var(--color-card-bg)]"
           >
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-sm font-medium text-[var(--color-secondary-text)]">{metric.label}</span>
-              <metric.icon className={`w-5 h-5 ${metric.color}`} />
+            <div className="flex items-center justify-between mb-3 sm:mb-4">
+              <span className="text-xs sm:text-sm font-medium text-[var(--color-secondary-text)]">{metric.label}</span>
+              <metric.icon className={`w-4 h-4 sm:w-5 sm:h-5 ${metric.color}`} />
             </div>
-            <div className="text-3xl font-bold">{metric.value}</div>
+            <div className="text-2xl sm:text-3xl font-bold">{metric.value}</div>
           </motion.div>
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
         <div className="lg:col-span-2 space-y-8">
           {/* Current Contribution */}
           {activeIssue && (

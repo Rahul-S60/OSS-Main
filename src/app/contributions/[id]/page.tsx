@@ -140,9 +140,39 @@ export default function ContributionWorkspace() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto h-[calc(100vh-6rem)] flex flex-col md:flex-row gap-6 relative">
-      {/* Left Column: Navigation */}
-      <div className="w-full md:w-64 shrink-0 overflow-y-auto">
+    <div className="max-w-7xl mx-auto min-h-[calc(100vh-6rem)] md:h-[calc(100vh-6rem)] flex flex-col md:flex-row gap-4 md:gap-6 relative">
+      {/* Mobile Step Navigator */}
+      <div className="md:hidden flex items-center gap-2 overflow-x-auto pb-2 shrink-0">
+        {STEPS.map((stepName, idx) => {
+          const isCompleted = idx < currentStep;
+          const isCurrent = idx === currentStep;
+          return (
+            <div
+              key={idx}
+              className={cn(
+                "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap shrink-0 border transition-all",
+                isCompleted
+                  ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
+                  : isCurrent
+                  ? "bg-[var(--color-primary-accent)]/15 text-[var(--color-primary-accent)] border-[var(--color-primary-accent)]/40 font-bold shadow-sm"
+                  : "bg-[var(--color-elevated-surface)] text-[var(--color-muted-text)] border-[var(--color-border)]"
+              )}
+            >
+              {isCompleted ? (
+                <Check className="w-3 h-3 text-emerald-400" />
+              ) : isCurrent ? (
+                <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-primary-accent)] animate-pulse" />
+              ) : (
+                <span>{idx + 1}</span>
+              )}
+              <span>{stepName}</span>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Desktop Left Column: Navigation Timeline */}
+      <div className="hidden md:block w-64 shrink-0 overflow-y-auto">
         <h2 className="text-sm font-semibold uppercase tracking-wider text-[var(--color-muted-text)] mb-4">Contribution Path</h2>
         <div className="space-y-1 relative border-l border-[var(--color-border)] ml-3">
           {STEPS.map((stepName, idx) => {
@@ -175,16 +205,16 @@ export default function ContributionWorkspace() {
 
       {/* Center Column: Active Step Workspace */}
       <div className="flex-1 min-w-0 bg-[var(--color-card-bg)] border border-[var(--color-border)] rounded-2xl flex flex-col overflow-hidden shadow-sm">
-        <div className="p-6 border-b border-[var(--color-border)] bg-[var(--color-elevated-surface)]/50 shrink-0">
-          <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold tracking-tight">Step {currentStep + 1}: {STEPS[currentStep]}</h1>
-            <div className="text-sm font-medium text-[var(--color-secondary-text)]">
-              {issue.repository} <span className="mx-2">•</span> #{issue.id}
+        <div className="p-4 sm:p-6 border-b border-[var(--color-border)] bg-[var(--color-elevated-surface)]/50 shrink-0">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-4">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Step {currentStep + 1}: {STEPS[currentStep]}</h1>
+            <div className="text-xs sm:text-sm font-medium text-[var(--color-secondary-text)]">
+              {issue.repository} <span className="mx-1 sm:mx-2">•</span> #{issue.id}
             </div>
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-6 md:p-8">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8">
           <AnimatePresence mode="wait">
             {/* Step 1: Understand */}
             {currentStep === 0 && (
@@ -193,15 +223,15 @@ export default function ContributionWorkspace() {
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
-                className="max-w-2xl mx-auto space-y-8"
+                className="max-w-2xl mx-auto space-y-6 sm:space-y-8"
               >
                 <div>
                   <h2 className="text-xl font-semibold mb-2">Understand the issue</h2>
                   <p className="text-[var(--color-secondary-text)]">Before writing code, make sure you understand what needs to change.</p>
                 </div>
                 
-                <div className="p-5 rounded-xl border border-[var(--color-border)] bg-[var(--color-elevated-surface)]">
-                  <h3 className="font-semibold mb-4">Checklist</h3>
+                <div className="p-4 sm:p-5 rounded-xl border border-[var(--color-border)] bg-[var(--color-elevated-surface)]">
+                  <h3 className="font-semibold mb-4 text-sm sm:text-base">Checklist</h3>
                   <div className="space-y-3">
                     {["Read issue description", "Understand expected behavior", "Identify affected files", "Check existing tests"].map((item, i) => (
                       <label key={i} className="flex items-center gap-3 cursor-pointer group">
@@ -217,16 +247,16 @@ export default function ContributionWorkspace() {
                   </div>
                 </div>
 
-                <div className="p-5 rounded-xl bg-[var(--color-primary-accent)]/10 border border-[var(--color-primary-accent)]/20">
-                  <h3 className="font-semibold text-[var(--color-primary-accent)] mb-2 flex items-center gap-2">
+                <div className="p-4 sm:p-5 rounded-xl bg-[var(--color-primary-accent)]/10 border border-[var(--color-primary-accent)]/20">
+                  <h3 className="font-semibold text-[var(--color-primary-accent)] mb-2 flex items-center gap-2 text-sm sm:text-base">
                     <Github className="w-4 h-4" /> Maintainer notes
                   </h3>
-                  <p className="text-sm text-[var(--color-primary-text)]">
+                  <p className="text-xs sm:text-sm text-[var(--color-primary-text)] leading-relaxed">
                     "Thanks for looking into this! The relevant code is mostly in `fastapi/exceptions.py`. You'll want to check how Pydantic validation errors are formatted before being sent to the client."
                   </p>
                 </div>
 
-                <div className="pt-4">
+                <div className="pt-2 sm:pt-4">
                   <Button size="lg" className="w-full" onClick={nextStep} disabled={!step1Checks.every(Boolean)}>
                     Mark as understood
                   </Button>
@@ -241,7 +271,7 @@ export default function ContributionWorkspace() {
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
-                className="max-w-2xl mx-auto space-y-8"
+                className="max-w-2xl mx-auto space-y-6 sm:space-y-8"
               >
                 <div>
                   <h2 className="text-xl font-semibold mb-2">Setup workspace</h2>
@@ -254,11 +284,11 @@ export default function ContributionWorkspace() {
                     { id: "cd", label: "Navigate to directory", cmd: `cd ${issue.repository.split('/')[1]}` },
                     { id: "branch", label: "Create branch", cmd: `git checkout -b fix-validation-errors` }
                   ].map((cmd) => (
-                    <div key={cmd.id} className="p-4 rounded-xl border border-[var(--color-border)] bg-[var(--color-elevated-surface)] flex flex-col gap-2">
-                      <span className="text-sm font-medium text-[var(--color-secondary-text)]">{cmd.label}</span>
-                      <div className="flex items-center gap-2 bg-[var(--color-background)] rounded-lg p-3">
+                    <div key={cmd.id} className="p-3.5 sm:p-4 rounded-xl border border-[var(--color-border)] bg-[var(--color-elevated-surface)] flex flex-col gap-2">
+                      <span className="text-xs sm:text-sm font-medium text-[var(--color-secondary-text)]">{cmd.label}</span>
+                      <div className="flex items-center gap-2 bg-[var(--color-background)] rounded-lg p-2.5 sm:p-3 min-w-0">
                         <Terminal className="w-4 h-4 text-[var(--color-muted-text)] shrink-0" />
-                        <code className="text-sm font-mono flex-1 overflow-x-auto text-[var(--color-primary-text)]">{cmd.cmd}</code>
+                        <code className="text-xs sm:text-sm font-mono flex-1 overflow-x-auto text-[var(--color-primary-text)] whitespace-nowrap">{cmd.cmd}</code>
                         <Button 
                           variant="ghost" 
                           size="icon" 
@@ -272,7 +302,7 @@ export default function ContributionWorkspace() {
                   ))}
                 </div>
 
-                <div className="pt-4">
+                <div className="pt-2 sm:pt-4">
                   <Button size="lg" className="w-full" onClick={nextStep}>
                     Workspace ready
                   </Button>

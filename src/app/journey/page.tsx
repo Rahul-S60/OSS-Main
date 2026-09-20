@@ -57,10 +57,10 @@ export default function JourneyPage() {
         </p>
       </div>
 
-      <div className="flex border-b border-[var(--color-border)]">
+      <div className="flex border-b border-[var(--color-border)] overflow-x-auto text-sm sm:text-base">
         <button
           onClick={() => setActiveTab("ongoing")}
-          className={`flex items-center gap-2 px-6 py-4 font-medium transition-colors relative ${
+          className={`flex items-center gap-2 px-4 sm:px-6 py-3 sm:py-4 font-medium transition-colors relative whitespace-nowrap shrink-0 ${
             activeTab === "ongoing" ? "text-[var(--color-primary-accent)]" : "text-[var(--color-secondary-text)] hover:text-[var(--color-primary-text)]"
           }`}
         >
@@ -71,7 +71,7 @@ export default function JourneyPage() {
         </button>
         <button
           onClick={() => setActiveTab("saved")}
-          className={`flex items-center gap-2 px-6 py-4 font-medium transition-colors relative ${
+          className={`flex items-center gap-2 px-4 sm:px-6 py-3 sm:py-4 font-medium transition-colors relative whitespace-nowrap shrink-0 ${
             activeTab === "saved" ? "text-[var(--color-primary-accent)]" : "text-[var(--color-secondary-text)] hover:text-[var(--color-primary-text)]"
           }`}
         >
@@ -82,7 +82,7 @@ export default function JourneyPage() {
         </button>
         <button
           onClick={() => setActiveTab("completed")}
-          className={`flex items-center gap-2 px-6 py-4 font-medium transition-colors relative ${
+          className={`flex items-center gap-2 px-4 sm:px-6 py-3 sm:py-4 font-medium transition-colors relative whitespace-nowrap shrink-0 ${
             activeTab === "completed" ? "text-[var(--color-primary-accent)]" : "text-[var(--color-secondary-text)] hover:text-[var(--color-primary-text)]"
           }`}
         >

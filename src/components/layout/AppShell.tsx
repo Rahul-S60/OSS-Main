@@ -3,13 +3,15 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { 
   Search, Bell, Menu, X, LayoutDashboard, Compass, 
-  GitMerge, Trophy, Award, UserCircle, Code2, LogOut
+  GitMerge, Trophy, Award, UserCircle, Code2, LogOut,
+  Sun, Moon
 } from "lucide-react";
 import { getUserProfile } from "@/app/actions/user";
 import { useSession, signOut } from "next-auth/react";
+import { useTheme } from "@/components/ThemeProvider";
 import { cn } from "@/lib/utils";
 
 interface Contribution {
@@ -34,6 +36,7 @@ const navItems = [
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { data: session } = useSession();
+  const { theme, setTheme } = useTheme();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profile, setProfile] = useState<UserProfile | null>(null);
 
@@ -43,7 +46,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     }
   }, [session]);
 
-  const activeIssueId = profile?.contributions?.find((c: Contribution) => c.status !== "merged")?.issueId;
   const points = profile?.points || 0;
   
   const handleLogout = async () => {
@@ -63,37 +65,44 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-[var(--color-background)] flex flex-col md:flex-row">
       {/* Mobile Header */}
-      <div className="md:hidden flex items-center justify-between p-4 border-b border-[var(--color-border)] bg-[var(--color-background)] sticky top-0 z-40">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-[var(--color-primary-accent)] flex items-center justify-center">
-            <Code2 className="w-5 h-5 text-white" />
+      <header className="md:hidden flex items-center justify-between px-4 py-3 border-b border-[var(--color-border)] bg-[var(--color-background)]/90 backdrop-blur-md sticky top-0 z-40">
+        <Link href="/dashboard" className="flex items-center gap-2.5 min-w-0">
+          <div className="w-8 h-8 rounded-lg bg-[var(--color-primary-accent)] flex items-center justify-center shrink-0 shadow-sm">
+            <Code2 className="w-4 h-4 text-white" />
           </div>
-        </div>
-        <div className="flex items-center gap-4">
-          <button className="text-[var(--color-secondary-text)]">
-            <Search className="w-5 h-5" />
-          </button>
-          <button className="text-[var(--color-secondary-text)]">
-            <Bell className="w-5 h-5" />
-          </button>
-          <button 
-            className="text-[var(--color-primary-text)]"
-            onClick={() => setMobileMenuOpen(true)}
+          <span className="font-bold text-sm tracking-tight truncate">OpenSource Companion</span>
+        </Link>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            className="p-2 rounded-lg border border-[var(--color-border)] text-[var(--color-secondary-text)] hover:text-[var(--color-primary-text)] hover:bg-[var(--color-elevated-surface)] transition-colors min-w-[36px] min-h-[36px] flex items-center justify-center"
+            aria-label="Toggle Theme"
           >
-            <Menu className="w-6 h-6" />
+            {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          </button>
+          <Link href="/profile" className="w-8 h-8 rounded-full overflow-hidden border border-[var(--color-border)] shrink-0">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={session?.user?.image || "https://github.com/ghost.png"} alt={session?.user?.name || "User"} className="w-full h-full object-cover" />
+          </Link>
+          <button 
+            className="p-2 rounded-lg border border-[var(--color-border)] text-[var(--color-primary-text)] hover:bg-[var(--color-elevated-surface)] transition-colors min-w-[36px] min-h-[36px] flex items-center justify-center"
+            onClick={() => setMobileMenuOpen(true)}
+            aria-label="Open Navigation Menu"
+          >
+            <Menu className="w-5 h-5" />
           </button>
         </div>
-      </div>
+      </header>
 
       {/* Sidebar (Desktop) */}
       <aside className="hidden md:flex flex-col w-64 border-r border-[var(--color-border)] bg-[var(--color-secondary-bg)] h-screen sticky top-0 shrink-0">
         <div className="h-16 flex items-center px-6 border-b border-[var(--color-border)]/50 shrink-0">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-[var(--color-primary-accent)] flex items-center justify-center">
+          <Link href="/dashboard" className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-[var(--color-primary-accent)] flex items-center justify-center shadow-sm">
               <Code2 className="w-5 h-5 text-white" />
             </div>
-            <span className="font-semibold tracking-tight">OpenSource Companion</span>
-          </div>
+            <span className="font-semibold tracking-tight text-sm">OpenSource Companion</span>
+          </Link>
         </div>
 
         <div className="flex-1 overflow-y-auto py-6 px-3 flex flex-col gap-1">
@@ -105,13 +114,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 key={item.name} 
                 href={item.href}
                 className={cn(
-                  "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors relative",
+                  "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors relative",
                   isActive 
-                    ? "text-[var(--color-primary-accent)] bg-[var(--color-primary-accent)]/10" 
+                    ? "text-[var(--color-primary-accent)] bg-[var(--color-primary-accent)]/10 font-semibold" 
                     : "text-[var(--color-secondary-text)] hover:text-[var(--color-primary-text)] hover:bg-[var(--color-elevated-surface)]"
                 )}
               >
-                <item.icon className="w-5 h-5" />
+                <item.icon className="w-4 h-4" />
                 {item.name}
               </Link>
             );
@@ -119,25 +128,35 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
 
         <div className="p-4 border-t border-[var(--color-border)]/50 shrink-0 flex flex-col gap-2">
+          <div className="flex items-center justify-between px-2 py-1 mb-1">
+            <span className="text-xs text-[var(--color-muted-text)]">Theme</span>
+            <button
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              className="p-1.5 rounded-md border border-[var(--color-border)] text-[var(--color-secondary-text)] hover:text-[var(--color-primary-text)] hover:bg-[var(--color-elevated-surface)] transition-colors"
+              aria-label="Toggle Theme"
+            >
+              {theme === "dark" ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
+            </button>
+          </div>
           <Link href="/profile" className="flex items-center gap-3 p-2 rounded-lg hover:bg-[var(--color-elevated-surface)] transition-colors group">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={session?.user?.image || "https://github.com/ghost.png"} alt={session?.user?.name || "User"} className="w-10 h-10 rounded-full border border-[var(--color-border)]" />
+            <img src={session?.user?.image || "https://github.com/ghost.png"} alt={session?.user?.name || "User"} className="w-9 h-9 rounded-full border border-[var(--color-border)] object-cover" />
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-[var(--color-primary-text)] truncate">{session?.user?.name || "Contributor"}</p>
-              <p className="text-xs text-[var(--color-primary-accent)] font-medium">{points} points</p>
+              <p className="text-xs text-[var(--color-primary-accent)] font-semibold">{points} points</p>
             </div>
           </Link>
           <button 
             onClick={handleLogout}
             className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-red-500 hover:bg-red-500/10 transition-colors w-full"
           >
-            <LogOut className="w-5 h-5" />
+            <LogOut className="w-4 h-4" />
             Logout
           </button>
         </div>
       </aside>
 
-      {/* Main Content */}
+      {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Desktop Topbar */}
         <header className="hidden md:flex h-16 items-center justify-between px-8 border-b border-[var(--color-border)] bg-[var(--color-background)]/80 backdrop-blur-md sticky top-0 z-30">
@@ -147,68 +166,126 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <input 
                 type="text" 
                 placeholder="Search issues, repositories... (Cmd+K)" 
-                className="w-full h-10 bg-[var(--color-elevated-surface)] border border-[var(--color-border)] rounded-lg pl-10 pr-4 text-sm focus:outline-none focus:border-[var(--color-primary-accent)] focus:ring-1 focus:ring-[var(--color-primary-accent)] transition-all"
+                className="w-full h-9 bg-[var(--color-elevated-surface)] border border-[var(--color-border)] rounded-lg pl-9 pr-4 text-xs focus:outline-none focus:border-[var(--color-primary-accent)] focus:ring-1 focus:ring-[var(--color-primary-accent)] transition-all"
               />
             </div>
           </div>
-          <div className="flex items-center gap-4">
-            <button className="relative p-2 text-[var(--color-secondary-text)] hover:text-[var(--color-primary-text)] transition-colors rounded-lg hover:bg-[var(--color-elevated-surface)]">
-              <Bell className="w-5 h-5" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[var(--color-primary-accent)] rounded-full border border-[var(--color-background)]" />
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              className="p-2 rounded-lg border border-[var(--color-border)] text-[var(--color-secondary-text)] hover:text-[var(--color-primary-text)] hover:bg-[var(--color-elevated-surface)] transition-colors"
+              aria-label="Toggle Theme"
+            >
+              {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             </button>
-            <Link href="/settings" className="w-8 h-8 rounded-full overflow-hidden border border-[var(--color-border)]">
-              <img src={session?.user?.image || "https://github.com/ghost.png"} alt={session?.user?.name || "User"} />
+            <Link href="/profile" className="w-8 h-8 rounded-full overflow-hidden border border-[var(--color-border)]">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={session?.user?.image || "https://github.com/ghost.png"} alt={session?.user?.name || "User"} className="w-full h-full object-cover" />
             </Link>
           </div>
         </header>
 
-        <main className="flex-1 p-4 md:p-8 overflow-y-auto">
+        <main className="flex-1 p-4 sm:p-6 md:p-8 overflow-y-auto w-full max-w-7xl mx-auto">
           {children}
         </main>
       </div>
 
-      {/* Mobile Navigation Menu */}
-      {mobileMenuOpen && (
-        <div className="fixed inset-0 z-50 md:hidden flex">
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setMobileMenuOpen(false)} />
-          <motion.div 
-            initial={{ x: "-100%" }}
-            animate={{ x: 0 }}
-            exit={{ x: "-100%" }}
-            transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="relative w-[280px] bg-[var(--color-secondary-bg)] h-full flex flex-col border-r border-[var(--color-border)]"
-          >
-            <div className="h-16 flex items-center justify-between px-4 border-b border-[var(--color-border)]">
-              <span className="font-semibold">OpenSource Companion</span>
-              <button onClick={() => setMobileMenuOpen(false)}>
-                <X className="w-6 h-6" />
-              </button>
-            </div>
-            <div className="flex-1 overflow-y-auto py-4 px-2 flex flex-col gap-1">
-              {navItems.map((item) => (
-                <Link 
-                  key={item.name} 
-                  href={item.href}
+      {/* Mobile Navigation Drawer */}
+      <AnimatePresence>
+        {mobileMenuOpen && (
+          <div className="fixed inset-0 z-50 md:hidden flex">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm" 
+              onClick={() => setMobileMenuOpen(false)} 
+            />
+            <motion.div 
+              initial={{ x: "-100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "-100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="relative w-[290px] max-w-[85vw] bg-[var(--color-secondary-bg)] h-full flex flex-col border-r border-[var(--color-border)] shadow-2xl z-10"
+            >
+              <div className="h-16 flex items-center justify-between px-4 border-b border-[var(--color-border)] shrink-0">
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-lg bg-[var(--color-primary-accent)] flex items-center justify-center">
+                    <Code2 className="w-4 h-4 text-white" />
+                  </div>
+                  <span className="font-bold text-sm tracking-tight">OpenSource Companion</span>
+                </div>
+                <button 
                   onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium text-[var(--color-secondary-text)] hover:bg-[var(--color-elevated-surface)] hover:text-[var(--color-primary-text)]"
+                  className="p-1.5 rounded-lg hover:bg-[var(--color-elevated-surface)] text-[var(--color-secondary-text)]"
+                  aria-label="Close navigation"
                 >
-                  <item.icon className="w-5 h-5" />
-                  {item.name}
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Contributor Profile Header in Drawer */}
+              <div className="p-4 border-b border-[var(--color-border)] bg-[var(--color-card-bg)]/50 shrink-0">
+                <Link 
+                  href="/profile" 
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center gap-3"
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={session?.user?.image || "https://github.com/ghost.png"} alt={session?.user?.name || "User"} className="w-10 h-10 rounded-full border border-[var(--color-border)] object-cover" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-[var(--color-primary-text)] truncate">{session?.user?.name || "Contributor"}</p>
+                    <p className="text-xs text-[var(--color-primary-accent)] font-semibold">{points} XP Points</p>
+                  </div>
                 </Link>
-              ))}
-            </div>
-            <div className="p-4 border-t border-[var(--color-border)] shrink-0">
-              <button 
-                onClick={handleLogout}
-                className="flex items-center gap-3 px-3 py-3 w-full rounded-lg text-sm font-medium text-red-500 hover:bg-red-500/10 transition-colors"
-              >
-                <LogOut className="w-5 h-5" />
-                Logout
-              </button>
-            </div>
-          </motion.div>
-        </div>
-      )}
+              </div>
+
+              <div className="flex-1 overflow-y-auto py-3 px-2 flex flex-col gap-1">
+                <p className="px-3 text-[11px] font-semibold text-[var(--color-muted-text)] uppercase tracking-wider mb-1">Navigation</p>
+                {navItems.map((item) => {
+                  const isActive = pathname.startsWith(item.href);
+                  return (
+                    <Link 
+                      key={item.name} 
+                      href={item.href}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={cn(
+                        "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
+                        isActive
+                          ? "bg-[var(--color-primary-accent)]/10 text-[var(--color-primary-accent)] font-semibold"
+                          : "text-[var(--color-secondary-text)] hover:bg-[var(--color-elevated-surface)] hover:text-[var(--color-primary-text)]"
+                      )}
+                    >
+                      <item.icon className="w-4 h-4" />
+                      {item.name}
+                    </Link>
+                  );
+                })}
+              </div>
+
+              <div className="p-4 border-t border-[var(--color-border)] shrink-0 flex flex-col gap-3">
+                <div className="flex items-center justify-between px-2 py-1 bg-[var(--color-elevated-surface)] rounded-lg border border-[var(--color-border)]">
+                  <span className="text-xs font-medium text-[var(--color-secondary-text)]">Appearance</span>
+                  <button
+                    onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                    className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-md bg-[var(--color-card-bg)] text-[var(--color-primary-text)] border border-[var(--color-border)] shadow-sm"
+                  >
+                    {theme === "dark" ? <Sun className="w-3.5 h-3.5 text-amber-400" /> : <Moon className="w-3.5 h-3.5 text-indigo-400" />}
+                    {theme === "dark" ? "Light Mode" : "Dark Mode"}
+                  </button>
+                </div>
+                <button 
+                  onClick={handleLogout}
+                  className="flex items-center justify-center gap-2 px-3 py-2.5 w-full rounded-lg text-sm font-medium text-red-500 hover:bg-red-500/10 border border-red-500/20 transition-colors"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Logout
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
